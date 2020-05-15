@@ -6,8 +6,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="clipboard_client" />
         <module name="clipboard_server" />
-        <module name="clipboard_clitent" />
         <module name="clipboard" />
       </profile>
     </annotationProcessing>
@@ -17,7 +17,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="clipboard_clitent" options="-parameters" />
+      <module name="clipboard_client" options="-parameters" />
       <module name="clipboard_server" options="-parameters" />
     </option>
   </component>
