@@ -1,14 +1,9 @@
 package com.example.clipboard.client.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
 import java.util.Date;
 
-@Table
-@Entity
 public class Content {
-    @Id
+
     public String id;
     public String clipboard;
     public String account;
