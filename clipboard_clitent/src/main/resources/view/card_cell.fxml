@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXToolbar?>
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<JFXToolbar style="-fx-background-color: #fafafa;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <VBox BorderPane.alignment="CENTER">
+         <Label fx:id="label1" layoutX="10.0" layoutY="10.0" maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308" text="Once upone a time, this is a..." wrapText="false"
+                VBox.vgrow="ALWAYS">
+            <font>
+               <Font size="14.0"/>
+            </font>
+         </Label>
+      </VBox>
+   </center>
+   <padding>
+      <Insets left="5.0" right="5.0" />
+   </padding>
+   <top>
+      <HBox BorderPane.alignment="CENTER">
+         <Label fx:id="label" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+                text="This is a title" wrapText="false" HBox.hgrow="ALWAYS">
+            <font>
+               <Font name="System Bold" size="14.0"/>
+            </font>
+         </Label>
+         <JFXButton>
+            <graphic>
+               <FontAwesomeIconView glyphName="STAR"/>
+            </graphic>
+         </JFXButton>
+         <JFXButton layoutX="84.0" layoutY="10.0">
+            <graphic>
+               <FontAwesomeIconView glyphName="COPY"/>
+            </graphic>
+         </JFXButton>
+      </HBox>
+   </top>
+   <bottom>
+      <HBox BorderPane.alignment="CENTER">
+         <Label fx:id="label2" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Android"
+                wrapText="false" HBox.hgrow="ALWAYS">
+            <font>
+               <Font name="System Bold" size="14.0"/>
+            </font>
+            <graphic>
+               <FontAwesomeIconView glyphName="ANDROID"/>
+            </graphic>
+         </Label>
+         <JFXButton>
+            <graphic>
+               <FontAwesomeIconView glyphName="TRASH"/>
+            </graphic>
+         </JFXButton>
+      </HBox>
+   </bottom>
+</JFXToolbar>
