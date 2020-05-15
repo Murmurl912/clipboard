@@ -7,43 +7,41 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-      xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<VBox prefWidth="400.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <VBox>
       <padding>
-         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
       </padding>
       <Label text="Username">
          <padding>
-            <Insets bottom="5.0"/>
+            <Insets bottom="5.0" />
          </padding>
       </Label>
-      <TextField fx:id="username"/>
+      <TextField fx:id="username" />
       <Label text="Email Verification Code">
          <padding>
-            <Insets bottom="5.0" top="5.0"/>
+            <Insets bottom="5.0" top="5.0" />
          </padding>
       </Label>
-      <TextField layoutX="20.0" layoutY="41.0" fx:id="code"/>
+      <TextField fx:id="code" layoutX="20.0" layoutY="41.0" />
       <HBox>
          <VBox.margin>
-            <Insets top="20.0"/>
+            <Insets top="10.0" />
          </VBox.margin>
-         <JFXButton maxWidth="1.7976931348623157E308" text="Cancel" fx:id="cancel">
+         <JFXButton fx:id="cancel" maxWidth="1.7976931348623157E308" text="Cancel">
             <HBox.margin>
-               <Insets right="20.0"/>
+               <Insets />
             </HBox.margin>
          </JFXButton>
-         <Label maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS"/>
-         <JFXButton maxWidth="1.7976931348623157E308" text="Send" fx:id="send">
+         <Label maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+         <JFXButton fx:id="send" maxWidth="1.7976931348623157E308" text="Send">
             <HBox.margin>
-               <Insets right="20.0"/>
+               <Insets right="20.0" />
             </HBox.margin>
          </JFXButton>
-         <JFXButton layoutX="10.0" layoutY="10.0" maxWidth="1.7976931348623157E308" text="Confirm" fx:id="confirm">
+         <JFXButton fx:id="confirm" layoutX="10.0" layoutY="10.0" maxWidth="1.7976931348623157E308" text="Confirm">
             <HBox.margin>
-               <Insets left="20.0"/>
+               <Insets />
             </HBox.margin>
          </JFXButton>
       </HBox>

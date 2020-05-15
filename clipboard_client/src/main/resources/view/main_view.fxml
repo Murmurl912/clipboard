@@ -26,7 +26,7 @@
 
       <JFXToolbar style="-fx-background-color: #fafafa;">
          <left>
-            <JFXButton BorderPane.alignment="CENTER">
+            <JFXButton BorderPane.alignment="CENTER" focusTraversable="false">
                <graphic>
                   <FontAwesomeIconView glyphName="BARS"/>
                </graphic>
@@ -43,7 +43,7 @@
          </right>
          <center>
             <HBox BorderPane.alignment="CENTER">
-               <TextField HBox.hgrow="ALWAYS"/>
+               <TextField HBox.hgrow="ALWAYS" focusTraversable="false"/>
                <JFXButton>
                   <graphic>
                      <FontAwesomeIconView glyphName="SEARCH"/>

@@ -109,6 +109,8 @@ public class MainViewController {
         account.setOnMouseClicked(e -> {
             navigate(MainViewState.VIEW_STATE_PROFILE);
         });
+
+
     }
 
     @NonNull
@@ -132,9 +134,7 @@ public class MainViewController {
         }
     }
 
-    private void post() {
 
-    }
     private void navigate(MainViewState next) {
         if(transforming.get()) {
            return;

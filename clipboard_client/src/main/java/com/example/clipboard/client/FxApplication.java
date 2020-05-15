@@ -13,13 +13,13 @@ public class FxApplication extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        System.out.println("Stage Ready At: " + System.currentTimeMillis());
         applicationContext.publishEvent(new StageReadyEvent(stage));
     }
 
     @Override
     public void init() throws Exception {
         String[] args = getParameters().getRaw().toArray(new String[0]);
-
         this.applicationContext = new SpringApplicationBuilder()
                 .sources(ClipboardClientApplication.class)
                 .run(args);
