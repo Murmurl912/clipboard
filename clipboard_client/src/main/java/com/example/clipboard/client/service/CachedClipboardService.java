@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 import oshi.SystemInfo;
@@ -68,14 +69,14 @@ public class CachedClipboardService implements ApplicationListener<ClipboardEven
         if (repository == null) {
             repository = context.getBean(CachedContentRepository.class);
         }
-        return repository.findAll();
+        return repository.findAll(Sort.by(Sort.Order.desc("update")));
     }
 
     public List<Content> gets(Content content) {
         if (repository == null) {
             repository = context.getBean(CachedContentRepository.class);
         }
-        return repository.findAll(Example.of(content, ExampleMatcher.matchingAll()));
+        return repository.findAll(Example.of(content, ExampleMatcher.matchingAll()), Sort.by(Sort.Order.desc("update")));
     }
 
     @Override
@@ -114,13 +115,11 @@ public class CachedClipboardService implements ApplicationListener<ClipboardEven
             repository.save(data);
             event = new ContentEvent(this, null, data,
                     ContentEvent.ContentEventType.CONTENT_EVENT_TYPE_CREATION);
-            publisher.publishEvent(event);
         } else {
             data = contentOptional.get();
             data.update = new Date();
             event = new ContentEvent(this, contentOptional.get(), data,
                     ContentEvent.ContentEventType.CONTENT_EVENT_TYPE_UPDATE);
-            context.getBean(ApplicationEventPublisher.class).publishEvent(event);
         }
         context.getBean(ApplicationInfo.class).cacheTimestamp.set(System.currentTimeMillis());
         publisher.publishEvent(event);
