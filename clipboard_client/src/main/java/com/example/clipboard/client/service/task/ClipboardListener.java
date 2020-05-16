@@ -7,11 +7,13 @@ import javafx.scene.input.Clipboard;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+@Lazy(false)
 @Component
 public class ClipboardListener implements ApplicationListener<ApplicationStartEvent> {
 
@@ -25,26 +27,27 @@ public class ClipboardListener implements ApplicationListener<ApplicationStartEv
         System.out.println("event: " + applicationStartEvent);
     }
 
-    @Scheduled(fixedDelay = 1000 )
+    @Scheduled(fixedDelay = 1000)
     public void checkClipboard() {
-        Platform.runLater(()->{
-
+        Platform.runLater(() -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();
 
-            if(clipboard.hasString()) {
+            if (clipboard.hasString()) {
                 String now = clipboard.getString();
-                if(before.get() == null) {
+                if (before.get() == null) {
                     before.set(now);
                     System.out.println("Changed: " + now);
                 } else {
-                    if(!before.get().equals(now)) {
+                    if (!before.get().equals(now)) {
                         before.set(now);
                         ClipboardEvent event = new ClipboardEvent(this, now);
                         publisher.publishEvent(event);
                         System.out.println("Changed: " + now);
-                    };
+                    }
+                    ;
                 }
-            };
+            }
+            ;
         });
     }
 }

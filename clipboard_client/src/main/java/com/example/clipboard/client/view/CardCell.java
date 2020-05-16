@@ -1,68 +1,101 @@
 package com.example.clipboard.client.view;
 
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
+import com.example.clipboard.client.entity.Content;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import org.controlsfx.control.GridCell;
-import org.controlsfx.control.GridView;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import javax.annotation.PostConstruct;
+import java.util.HashMap;
+import java.util.Map;
 
-@Scope("prototype")
-@Component
-public class CardCell extends GridCell<CardCell.CellModel> {
 
-    public Label label;
+public class CardCell extends GridCell<Content> {
 
-    @Value("classpath:view/card_cell.fxml")
-    private Resource resource;
+    private final ViewReadyCallback mViewReadyCallback = new ViewReadyCallback() {
+        @Override
+        public void onReady(CardCell cardCell) {
 
-    private FXMLLoader loader = null;
+        }
+    };
+
+    private final ViewUpdateCallback mViewUpdateCallback = new ViewUpdateCallback() {
+        @Override
+        public void onUpdate(CardCell cell, Content content, boolean empty) {
+
+        }
+    };
+    private final Map<String, Node> holder = new HashMap<>();
+    private ViewReadyCallback viewReadyCallback;
+    private ViewUpdateCallback viewUpdateCallback;
+
     public CardCell() {
 
     }
 
+    public CardCell(ViewReadyCallback callback) {
+        this.viewReadyCallback = callback;
+    }
+
+    public CardCell(ViewUpdateCallback callback) {
+        this.viewUpdateCallback = callback;
+    }
+
+    public CardCell(ViewReadyCallback readyCallback,
+                    ViewUpdateCallback updateCallback) {
+        this.viewUpdateCallback = updateCallback;
+        this.viewReadyCallback = readyCallback;
+    }
+
+    @PostConstruct
+    private void init() {
+        if (this.viewReadyCallback == null) {
+            this.viewReadyCallback = mViewReadyCallback;
+        }
+
+        if (this.viewUpdateCallback == null) {
+            this.viewUpdateCallback = mViewUpdateCallback;
+        }
+    }
+
+    public Map<String, Node> getHolder() {
+        return holder;
+    }
+
+
+    public ViewReadyCallback getViewReadyCallback() {
+        return viewReadyCallback;
+    }
+
+    public void setViewReadyCallback(ViewReadyCallback viewReadyCallback) {
+        if (viewReadyCallback != null) {
+            this.viewReadyCallback = viewReadyCallback;
+        }
+    }
+
+    public ViewUpdateCallback getViewUpdateCallback() {
+        return viewUpdateCallback;
+    }
+
+    public void setViewUpdateCallback(ViewUpdateCallback viewUpdateCallback) {
+        if (viewUpdateCallback != null) {
+            this.viewUpdateCallback = viewUpdateCallback;
+        }
+    }
+
     @Override
-    protected void updateItem(CellModel cellModel, boolean empty) {
-        super.updateItem(cellModel, empty);
-        if(cellModel == null || empty) {
-            return;
+    protected void updateItem(Content content, boolean empty) {
+        if (getGraphic() == null) {
+            viewReadyCallback.onReady(this);
         }
-
-        if(loader != null && label != null) {
-            label.setText(cellModel.label);
-            return;
-        }
-
-        try {
-            loader = new FXMLLoader(resource.getURL());
-            loader.setController(this);
-            Node node = loader.load();
-            setGraphic(node);
-            label.setText(cellModel.label);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        viewUpdateCallback.onUpdate(this, content, empty);
     }
 
-    @FXML
-    private void initialize() {
-
+    public static interface ViewReadyCallback {
+        public void onReady(CardCell cardCell);
     }
 
-    public static class CellModel {
-        public String label;
-
-        public CellModel(String label) {
-            this.label = label;
-        }
-
+    public static interface ViewUpdateCallback {
+        public void onUpdate(CardCell cell, Content content, boolean empty);
     }
+
 }

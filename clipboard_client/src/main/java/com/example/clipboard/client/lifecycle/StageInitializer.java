@@ -15,12 +15,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class StageInitializer implements ApplicationListener<StageReadyEvent> {
 
+    private final ApplicationContext context;
     @Value("classpath:view/main_view.fxml")
     private Resource main;
     @Value("classpath:image/icon.png")
     private Resource icon;
-
-    private final ApplicationContext context;
 
     public StageInitializer(ApplicationContext context) {
         this.context = context;

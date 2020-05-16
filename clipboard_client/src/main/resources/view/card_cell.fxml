@@ -10,11 +10,14 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<JFXToolbar style="-fx-background-color: #fafafa;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<JFXToolbar style="-fx-background-color: #fafafa;"
+            xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml/1" fx:id="container">
    <center>
       <VBox BorderPane.alignment="CENTER">
-         <Label fx:id="label1" layoutX="10.0" layoutY="10.0" maxHeight="1.7976931348623157E308"
-                maxWidth="1.7976931348623157E308" text="Once upone a time, this is a..." wrapText="false"
+         <Label fx:id="content" layoutX="10.0" layoutY="10.0" maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308"
+                wrapText="true"
                 VBox.vgrow="ALWAYS">
             <font>
                <Font size="14.0"/>
@@ -27,36 +30,43 @@
    </padding>
    <top>
       <HBox BorderPane.alignment="CENTER">
-         <Label fx:id="label" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
-                text="This is a title" wrapText="false" HBox.hgrow="ALWAYS">
+         <Label fx:id="title"
+                maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308"
+                wrapText="true" HBox.hgrow="ALWAYS">
             <font>
                <Font name="System Bold" size="14.0"/>
             </font>
          </Label>
-         <JFXButton>
+         <JFXButton fx:id="star">
             <graphic>
-               <FontAwesomeIconView glyphName="STAR"/>
+               <FontAwesomeIconView glyphName="STAR" fx:id="starIcon"/>
             </graphic>
          </JFXButton>
-         <JFXButton layoutX="84.0" layoutY="10.0">
+         <JFXButton layoutX="84.0" layoutY="10.0" fx:id="copy">
             <graphic>
                <FontAwesomeIconView glyphName="COPY"/>
+            </graphic>
+         </JFXButton>
+         <JFXButton layoutX="84.0" layoutY="10.0" fx:id="archive">
+            <graphic>
+               <FontAwesomeIconView glyphName="ARCHIVE"/>
             </graphic>
          </JFXButton>
       </HBox>
    </top>
    <bottom>
       <HBox BorderPane.alignment="CENTER">
-         <Label fx:id="label2" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Android"
-                wrapText="false" HBox.hgrow="ALWAYS">
+         <Label fx:id="time" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+                HBox.hgrow="ALWAYS">
             <font>
                <Font name="System Bold" size="14.0"/>
             </font>
             <graphic>
-               <FontAwesomeIconView glyphName="ANDROID"/>
+               <FontAwesomeIconView glyphName="ANDROID" fx:id="device"/>
             </graphic>
          </Label>
-         <JFXButton>
+         <JFXButton fx:id="trash">
             <graphic>
                <FontAwesomeIconView glyphName="TRASH"/>
             </graphic>

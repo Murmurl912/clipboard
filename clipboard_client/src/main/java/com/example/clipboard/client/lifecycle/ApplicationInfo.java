@@ -5,6 +5,7 @@ import com.example.clipboard.client.entity.Account;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -15,5 +16,9 @@ public class ApplicationInfo {
     public volatile AtomicReference<Account> account = new AtomicReference<>(null);
 
     public volatile AtomicReference<AccessToken> accessToken = new AtomicReference<>(null);
+
+    public volatile AtomicLong cacheTimestamp = new AtomicLong(-1);
+
+    public volatile AtomicLong memoryTimestamp = new AtomicLong(-1);
 
 }
