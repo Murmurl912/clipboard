@@ -7,6 +7,10 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * STATE OF CONTENT
+ * (STAR: FALSE,
+ */
 @Entity
 @Table
 public class Content {
@@ -20,11 +24,9 @@ public class Content {
 
     @Lob
     public String content;
-
-    public Boolean star;
-    public Boolean archive;
-    public Boolean recycle;
-
+    public Date timestamp;
+    public Integer previous; // for example when a content is recycled previous state should be keep
+    public Integer state;
     public String hash;
 
     public Date create;
@@ -34,19 +36,25 @@ public class Content {
 
     }
 
-    public Content(String id, String account,
-                   ContentStatus status, String device,
-                   String content, Boolean star,
-                   Boolean archive, Boolean recycle,
-                   String hash, Date create, Date update) {
+    public Content(String id,
+                   String account,
+                   ContentStatus status,
+                   String device,
+                   String content,
+                   Date timestamp,
+                   ContentState previous,
+                   ContentState state,
+                   String hash,
+                   Date create,
+                   Date update) {
         this.id = id;
         this.account = account;
         this.status = status.STATUS;
         this.device = device;
         this.content = content;
-        this.star = star;
-        this.archive = archive;
-        this.recycle = recycle;
+        this.timestamp = timestamp;
+        this.previous = previous.STATE;
+        this.state = state.STATE;
         this.hash = hash;
         this.create = create;
         this.update = update;
@@ -62,9 +70,9 @@ public class Content {
                 Objects.equals(status, content1.status) &&
                 Objects.equals(device, content1.device) &&
                 Objects.equals(content, content1.content) &&
-                Objects.equals(star, content1.star) &&
-                Objects.equals(archive, content1.archive) &&
-                Objects.equals(recycle, content1.recycle) &&
+                Objects.equals(timestamp, content1.timestamp) &&
+                Objects.equals(previous, content1.previous) &&
+                Objects.equals(state, content1.state) &&
                 Objects.equals(hash, content1.hash) &&
                 Objects.equals(create, content1.create) &&
                 Objects.equals(update, content1.update);
@@ -72,22 +80,9 @@ public class Content {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, account, status, device, content, star, archive, recycle, hash, create, update);
+        return Objects.hash(id, account, status, device, content, timestamp, previous, state, hash, create, update);
     }
 
-    public static enum ContentStatus {
-        CONTENT_STATUS_LOCAL(0),
-        CONTENT_STATUS_LOCAL_SYNCED(1),
-        CONTENT_STATUS_LOCAL_SYNCING(2),
-        CONTENT_STATUS_CLOUD(3),
-        CONTENT_STATUS_CLOUD_SYNCING(4),
-        CONTENT_STATUS_CLOUD_SYNCED(5);
-        public int STATUS;
-
-        ContentStatus(int status) {
-            STATUS = status;
-        }
-    }
 
     @Override
     public String toString() {
@@ -97,9 +92,9 @@ public class Content {
                 ", status=" + status +
                 ", device='" + device + '\'' +
                 ", content='" + content + '\'' +
-                ", star=" + star +
-                ", archive=" + archive +
-                ", recycle=" + recycle +
+                ", timestamp=" + timestamp +
+                ", previous=" + state +
+                ", state=" + state +
                 ", hash='" + hash + '\'' +
                 ", create=" + create +
                 ", update=" + update +
@@ -115,22 +110,56 @@ public class Content {
             status = ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
         if(device == null)
             device = (new SystemInfo()).getOperatingSystem().getVersionInfo().getVersion();
-        if(star == null)
-            star = false;
-        if(archive == null)
-            archive = false;
-        if(recycle == null)
-            recycle = false;
+        if(state == null)
+            state = ContentState.CONTENT_STATE_NORMAL.STATE;
+        if(previous == null)
+            previous = state;
+        if(timestamp == null)
+            timestamp = new Date();
         if(create == null)
             create = new Date();
         if(update == null)
             update = new Date();
     }
 
-    public static enum ContentDifference {
-        CONTENT_DIFFERENCE_TEXT,
-        CONTENT_DIFFERENCE_FLAG,
+    public static enum ContentStatus {
+        CONTENT_STATUS_LOCAL(0),
+        CONTENT_STATUS_CLOUD(1);
+        public int STATUS;
+
+        ContentStatus(int status) {
+            STATUS = status;
+        }
+
+        public static ContentStatus get(int status) {
+            if (status == 1) {
+                return CONTENT_STATUS_CLOUD;
+            }
+            return CONTENT_STATUS_LOCAL;
+        }
     }
 
+    public static enum ContentState {
+        CONTENT_STATE_NORMAL(0),
+        CONTENT_STATE_STAR(1),
+        CONTENT_STATE_ARCHIVE(2),
+        CONTENT_STATE_RECYCLE(3),
+        CONTENT_STATE_DELETE(4);
+
+        public int STATE;
+        ContentState(int state) {
+            STATE = state;
+        }
+
+        public static ContentState get(int state) {
+            switch (state) {
+                case 1: return CONTENT_STATE_STAR;
+                case 2: return CONTENT_STATE_ARCHIVE;
+                case 3: return CONTENT_STATE_RECYCLE;
+                case 4: return CONTENT_STATE_DELETE;
+                default: return CONTENT_STATE_NORMAL;
+            }
+        }
+    }
 
 }

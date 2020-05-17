@@ -24,9 +24,4 @@ public class ContentEvent extends ApplicationEvent {
         return now;
     }
 
-    public enum ContentEventType {
-        CONTENT_EVENT_TYPE_CREATION,
-        CONTENT_EVENT_TYPE_DELETE,
-        CONTENT_EVENT_TYPE_UPDATE
-    }
 }

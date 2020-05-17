@@ -54,6 +54,7 @@ public class MainViewController {
     public JFXButton signout;
     public JFXButton setting;
     public JFXButton archive;
+
     public AtomicReference<MainViewState> stateAtomicReference = new AtomicReference<>(MainViewState.VIEW_STATE_DEFAULT);
     public AtomicBoolean transforming = new AtomicBoolean(false);
     @Value("classpath:view/signin_dialog.fxml")
@@ -73,6 +74,42 @@ public class MainViewController {
     @Value("classpath:view/card_cell.fxml")
     private Resource cardCellView;
     private ClipboardViewModel clipboardViewModel;
+
+    private final ListChangeListener<Content>
+            clipboardListener = change -> {
+        Platform.runLater(() -> {
+            container.getItems().clear();
+            container.getItems().addAll(change.getList());
+        });
+    };
+
+    private final ListChangeListener<Content>
+            starListener = change -> {
+        Platform.runLater(() -> {
+            container.getItems().clear();
+            container.getItems().addAll(change.getList());
+        });
+    };
+
+
+    private final ListChangeListener<Content>
+            archiveListener = change -> {
+        Platform.runLater(() -> {
+            container.getItems().clear();
+            container.getItems().addAll(change.getList());
+        });
+    };
+
+
+    private final ListChangeListener<Content>
+            recycleListener = change -> {
+        Platform.runLater(() -> {
+            container.getItems().clear();
+            container.getItems().addAll(change.getList());
+        });
+    };
+
+
 
     public MainViewController(ApplicationContext context) {
         this.context = context;
@@ -127,10 +164,11 @@ public class MainViewController {
                     if (empty || content == null) {
                         return;
                     }
+
                     Label label = ((Label) cell.getHolder().get("title"));
                     ((Label) cell.getHolder().get("content"))
                             .setText(content.content);
-                    if (content.star) {
+                    if (content.state == Content.ContentState.CONTENT_STATE_STAR.STATE) {
                         ((FontAwesomeIconView) ((JFXButton) cell.getHolder().get("star")).getGraphic())
                                 .setIcon(FontAwesomeIcon.STAR);
                     } else {
@@ -373,34 +411,56 @@ public class MainViewController {
         ;
     }
 
+    // todo refactor code
     private void archive() {
         menuToggle.setText("Archive");
+        if (clipboardViewModel == null) {
+            clipboardViewModel =
+                    context.getBean(ClipboardViewModel.class);
+        }
+        clearListener();
+        clipboardViewModel.getStar().addListener(archiveListener);
+        clipboardViewModel.refreshArchive();
     }
-
+    // todo refactor code
     private void star() {
         menuToggle.setText("Star");
+        if (clipboardViewModel == null) {
+            clipboardViewModel =
+                    context.getBean(ClipboardViewModel.class);
+        }
+        clearListener();
+        clipboardViewModel.getStar().addListener(starListener);
+        clipboardViewModel.refreshStar();
     }
-
+    // todo refactor code
     private void trash() {
         menuToggle.setText("Trash");
+        if (clipboardViewModel == null) {
+            clipboardViewModel =
+                    context.getBean(ClipboardViewModel.class);
+        }
+        clearListener();
+        clipboardViewModel.getTrash().addListener(recycleListener);
+        clipboardViewModel.refreshRecycle();
     }
-
+    // todo refactor code
     private void clipboard() {
         menuToggle.setText("Clipboard");
         if (clipboardViewModel == null) {
             clipboardViewModel =
                     context.getBean(ClipboardViewModel.class);
         }
-        clipboardViewModel.getClipboard().addListener(new ListChangeListener<Content>() {
-            @Override
-            public void onChanged(Change<? extends Content> change) {
-                Platform.runLater(() -> {
-                    container.getItems().clear();
-                    container.getItems().addAll(change.getList());
-                });
-            }
-        });
-        clipboardViewModel.refreshClipboardIfNecessary();
+        clearListener();
+        clipboardViewModel.getStar().addListener(clipboardListener);
+        clipboardViewModel.refreshClipboard();
+    }
+
+    private void clearListener() {
+        clipboardViewModel.getStar().removeListener(starListener);
+        clipboardViewModel.getClipboard().removeListener(clipboardListener);
+        clipboardViewModel.getArchive().removeListener(archiveListener);
+        clipboardViewModel.getTrash().removeListener(recycleListener);
     }
 
     private void setting() {

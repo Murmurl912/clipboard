@@ -1,10 +1,10 @@
 package com.example.clipboard.client.service.task;
 
-import com.example.clipboard.client.event.ClipboardUpdateEvent;
+import com.example.clipboard.client.event.ClipboardEvent;
+import com.example.clipboard.client.event.clipboard.ClipboardUpdateEvent;
 import com.example.clipboard.client.lifecycle.ApplicationStartEvent;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
@@ -46,7 +46,7 @@ public class ClipboardSpyTask implements ApplicationListener<ApplicationStartEve
                 } else {
                     if (!before.get().equals(now)) {
                         before.set(now);
-                        ClipboardUpdateEvent event = new ClipboardUpdateEvent(this, now);
+                        ClipboardEvent event = new ClipboardUpdateEvent(this, now);
                         publisher.publishEvent(event);
                     }
                 }
