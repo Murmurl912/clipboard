@@ -10,6 +10,7 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.reactivestreams.Publisher;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
@@ -68,6 +69,7 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
         Disposable subscribe = Single.fromCallable(service::getClipboard)
                 .subscribeOn(Schedulers.from(context.getBean("taskScheduler", Executor.class)))
                 .subscribe(contents -> {
+                    clipboard.clear();
                     clipboard.addAll(contents);
                     clipboardRefreshing.set(false);
                 });
@@ -134,6 +136,13 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
 
     public void refreshTrashIfNecessary() {
 
+    }
+
+    public Single<Content> state(String id, Content.ContentState state) {
+        return Single.fromCallable(()->{
+            return context.getBean(CachedClipboardService.class)
+                    .state(id, state);
+        });
     }
 
     @Override
@@ -280,12 +289,42 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
 
 
     private void handle(@NonNull ContentCreateEvent event) {
-
+        switch (Content.ContentState.get(event.getNow().state)) {
+            case CONTENT_STATE_NORMAL:
+                clipboard.add(0, event.getNow());
+                break;
+            case CONTENT_STATE_STAR:
+                clipboard.add(0, event.getNow());
+                star.add(0, event.getNow());
+                break;
+            case CONTENT_STATE_ARCHIVE:
+                archive.add(0, event.getNow());
+                break;
+            case CONTENT_STATE_RECYCLE:
+                trash.add(0, event.getNow());
+                break;
+            case CONTENT_STATE_DELETE:
+            default: throw new IllegalStateException("Cannot create a deleted content");
+        }
     }
 
     private void handle(@NonNull ContentNormalEvent event) {
-
+        switch (Content.ContentState.get(event.getBefore().state)) {
+            case CONTENT_STATE_STAR:
+                star.remove(event.getBefore());
+                break;
+            case CONTENT_STATE_ARCHIVE:
+                archive.remove(event.getBefore());
+                break;
+            case CONTENT_STATE_RECYCLE:
+                trash.remove(event.getBefore());
+                break;
+            case CONTENT_STATE_NORMAL:
+            case CONTENT_STATE_DELETE:
+            default:
+                throw new IllegalStateException("Cannot normal a deleted or normal content");
+        }
+        clipboard.add(0, event.getNow());
     }
-
 
 }

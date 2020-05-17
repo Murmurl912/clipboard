@@ -128,8 +128,8 @@ public class MainViewController {
                         cell.getHolder().put("node", node);
                         cell.getHolder().put("title", node.lookup("#title"));
                         cell.getHolder().put("content", node.lookup("#content"));
-                        cell.getHolder().put("star", node.lookup("#star"));
-                        cell.getHolder().put("trash", node.lookup("#trash"));
+                        Node star = node.lookup("#star");
+                        cell.getHolder().put("star", star);
                         cell.getHolder().put("time", node.lookup("#time"));
                         Node delete = node.lookup("#trash");
                         cell.getHolder().put("delete", delete);
@@ -138,6 +138,7 @@ public class MainViewController {
                         Node archive = node.lookup("#archive");
                         cell.getHolder().put("archive", archive);
                         Node container = node.lookup("#container");
+
                         copy.setOnMouseClicked(e -> {
                             copy(cell.getIndex(), cell.getItem());
                         });
@@ -150,6 +151,10 @@ public class MainViewController {
                             if (e.getClickCount() == 2) {
                                 open(cell.getIndex(), cell.getItem());
                             }
+                        });
+
+                        star.setOnMouseClicked(e -> {
+                            star(cell.getIndex(), cell.getItem());
                         });
 
                         archive.setOnMouseClicked(e -> {
@@ -177,6 +182,15 @@ public class MainViewController {
                     }
                     ((Label) cell.getHolder().get("time"))
                             .setText(DateFormat.getDateTimeInstance().format(content.update));
+
+                    switch (Content.ContentState.get(content.state)) {
+                        case CONTENT_STATE_NORMAL:
+                        case CONTENT_STATE_STAR:
+                        case CONTENT_STATE_ARCHIVE:
+
+                        case CONTENT_STATE_RECYCLE:
+                        default:
+                    }
                 }));
         container.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
@@ -296,22 +310,22 @@ public class MainViewController {
                 break;
 
                 case VIEW_STATE_STAR: {
-                    star();
+                    toStar();
                 }
                 break;
 
                 case VIEW_STATE_TRASH: {
-                    trash();
+                    toTrash();
                 }
                 break;
 
                 case VIEW_STATE_ARCHIVE: {
-                    archive();
+                    toArchive();
                 }
                 break;
 
                 default: {
-                    clipboard();
+                    toClipboard();
                 }
             }
             transforming.set(false);
@@ -412,18 +426,18 @@ public class MainViewController {
     }
 
     // todo refactor code
-    private void archive() {
+    private void toArchive() {
         menuToggle.setText("Archive");
         if (clipboardViewModel == null) {
             clipboardViewModel =
                     context.getBean(ClipboardViewModel.class);
         }
         clearListener();
-        clipboardViewModel.getStar().addListener(archiveListener);
+        clipboardViewModel.getArchive().addListener(archiveListener);
         clipboardViewModel.refreshArchive();
     }
     // todo refactor code
-    private void star() {
+    private void toStar() {
         menuToggle.setText("Star");
         if (clipboardViewModel == null) {
             clipboardViewModel =
@@ -434,7 +448,7 @@ public class MainViewController {
         clipboardViewModel.refreshStar();
     }
     // todo refactor code
-    private void trash() {
+    private void toTrash() {
         menuToggle.setText("Trash");
         if (clipboardViewModel == null) {
             clipboardViewModel =
@@ -445,14 +459,14 @@ public class MainViewController {
         clipboardViewModel.refreshRecycle();
     }
     // todo refactor code
-    private void clipboard() {
+    private void toClipboard() {
         menuToggle.setText("Clipboard");
         if (clipboardViewModel == null) {
             clipboardViewModel =
                     context.getBean(ClipboardViewModel.class);
         }
         clearListener();
-        clipboardViewModel.getStar().addListener(clipboardListener);
+        clipboardViewModel.getClipboard().addListener(clipboardListener);
         clipboardViewModel.refreshClipboard();
     }
 
@@ -482,10 +496,86 @@ public class MainViewController {
 
     private void archive(int index, Content content) {
 
+        content = container.getItems().get(index);
+        switch (Content.ContentState.get(content.state)) {
+            case CONTENT_STATE_NORMAL:
+            case CONTENT_STATE_STAR:
+                if (clipboardViewModel == null) {
+                    clipboardViewModel =
+                            context.getBean(ClipboardViewModel.class);
+                }
+                clipboardViewModel.state(content.id, Content.ContentState.CONTENT_STATE_ARCHIVE)
+                        .subscribe();
+                break;
+            case CONTENT_STATE_ARCHIVE:
+                if (clipboardViewModel == null) {
+                    clipboardViewModel =
+                            context.getBean(ClipboardViewModel.class);
+                }
+                switch (Content.ContentState.get(content.previous)) {
+                    case CONTENT_STATE_NORMAL:
+                    case CONTENT_STATE_STAR:
+                        clipboardViewModel.state(content.id, Content.ContentState.get(content.state))
+                                .subscribe();
+                        break;
+                    case CONTENT_STATE_ARCHIVE:
+                    case CONTENT_STATE_RECYCLE:
+                        clipboardViewModel.state(content.id, Content.ContentState.CONTENT_STATE_NORMAL);
+                        break;
+                    case CONTENT_STATE_DELETE:
+                    default: throw new RuntimeException("Cannot unarchive: " + content);
+                }
+                break;
+            default:
+                throw new RuntimeException("Cannot archive content: " + content);
+
+        }
+    }
+
+    private void star(int index, Content content) {
+        content = container.getItems().get(index);
+        switch (Content.ContentState.get(content.state)) {
+            case CONTENT_STATE_NORMAL:
+            case CONTENT_STATE_ARCHIVE:
+                if (clipboardViewModel == null) {
+                    clipboardViewModel =
+                            context.getBean(ClipboardViewModel.class);
+                }
+                clipboardViewModel.state(content.id,
+                        Content.ContentState.CONTENT_STATE_STAR)
+                        .subscribe();
+                break;
+            case CONTENT_STATE_STAR:
+                if (clipboardViewModel == null) {
+                    clipboardViewModel =
+                            context.getBean(ClipboardViewModel.class);
+                }
+                clipboardViewModel.state(content.id,
+                        Content.ContentState.CONTENT_STATE_NORMAL)
+                        .subscribe();
+                break;
+            default:
+                throw new RuntimeException("Cannot star content: " + content);
+        }
     }
 
     private void delete(int index, Content content) {
-
+        content = container.getItems().get(index);
+        switch (Content.ContentState.get(content.state)) {
+            case CONTENT_STATE_STAR:
+            case CONTENT_STATE_ARCHIVE:
+            case CONTENT_STATE_NORMAL:
+                if (clipboardViewModel == null) {
+                    clipboardViewModel =
+                            context.getBean(ClipboardViewModel.class);
+                }
+                clipboardViewModel.state(content.id,
+                        Content.ContentState.CONTENT_STATE_ARCHIVE)
+                        .subscribe();
+            case CONTENT_STATE_RECYCLE:
+            case CONTENT_STATE_DELETE:
+                throw new RuntimeException("Cannot recycle content: " + content);
+        }
     }
 
     private void toggleMenu() {

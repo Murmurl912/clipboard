@@ -80,6 +80,9 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
                 content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
                 content.previous = content.state;
                 content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
+                SystemInfo systemInfo = new SystemInfo();
+                content.device = systemInfo.getOperatingSystem().getVersionInfo().getVersion();
+                content.setDefaultIfAbsent();
                 Content saved = repository.save(content);
                 ContentCreateEvent event = new ContentCreateEvent(this, saved, saved);
                 publisher.publishEvent(event);
@@ -218,11 +221,7 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
 
             content.update = new Date();
             content.previous = old.state;
-            if(state == Content.ContentState.CONTENT_STATE_NORMAL) {
-                content.state = old.previous;
-            } else {
-                content.state = state.STATE;
-            }
+            content.state = state.STATE;
             Content saved = repository.save(content);
             ContentEvent event = null;
             switch (state) {
@@ -363,47 +362,9 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
      */
     @Override
     public void onApplicationEvent(ClipboardUpdateEvent clipboardUpdateEvent) {
-        ensureDigestNotNull();
-        ensureRepositoryNotNull();
-        ensureApplicationInfoNotNull();
-
-        Content data = new Content();
-        data.content = clipboardUpdateEvent.getContent();
-        data.hash = hash(data.content);;
-
-        Optional<Content> contentOptional = repository.findOne(Example.of(data, ExampleMatcher.matchingAll()));
-        ContentEvent event = null;
-
-        if (contentOptional.isEmpty()) {
-            Account account = applicationInfo.account.get();
-            if (account == null) {
-                data.account = "local"; // not account login
-            } else {
-                data.account = account.id;
-            }
-
-            data.id = UUID.randomUUID().toString();
-            data.update = new Date();
-            data.create = new Date();
-            data.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
-            data.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-            SystemInfo systemInfo = new SystemInfo();
-            data.device = systemInfo.getOperatingSystem().getVersionInfo().getVersion();
-            data = repository.save(data);
-            data.timestamp = new Date();
-            // an content create event is generated
-            event = new ContentCreateEvent(this, null, data);
-        } else {
-            data = contentOptional.get();
-            data.timestamp = new Date();
-            data.update = new Date();
-
-            data = repository.save(data);
-            // an content time update event is generated
-            event = new ContentUpdateEvent(this, contentOptional.get(), data);
-        }
-        applicationInfo.cacheTimestamp.set(System.currentTimeMillis());
-        publisher.publishEvent(event);
+        Content content = new Content();
+        content.content = clipboardUpdateEvent.getContent();
+        save(content);
     }
 
     private void ensureRepositoryNotNull() {
@@ -478,6 +439,7 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
     }
     @NonNull
     private String hash(@NonNull String str) {
+        ensureDigestNotNull();
         byte[] bytes = digest.digest(str.getBytes(StandardCharsets.UTF_8));
         return Base64Utils.encodeToString(bytes);
     }

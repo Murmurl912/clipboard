@@ -84,15 +84,15 @@
                   <JFXButton focusTraversable="false"
                              alignment="TOP_LEFT" layoutX="10.0" layoutY="36.0"
                              maxWidth="1.7976931348623157E308"
-                             text="Trash" fx:id="archive">
+                             text="Archive" fx:id="archive">
                      <graphic>
-                        <FontAwesomeIconView glyphName="TRASH"/>
+                        <FontAwesomeIconView glyphName="ARCHIVE"/>
                      </graphic>
                   </JFXButton>
                   <JFXButton focusTraversable="false" alignment="TOP_LEFT" layoutX="10.0" layoutY="36.0" maxWidth="1.7976931348623157E308"
-                             text="Archive" fx:id="trash">
+                             text="Trash" fx:id="trash">
                      <graphic>
-                        <FontAwesomeIconView glyphName="ARCHIVE"/>
+                        <FontAwesomeIconView glyphName="TRASH"/>
                      </graphic>
                   </JFXButton>
                   <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS"/>
