@@ -4,17 +4,18 @@ import java.lang.reflect.Field;
 
 public class CopyHelper {
 
-    public static <T> void copyIfDifferent(T source, T data) throws IllegalAccessException {
-        Field[] fields = source.getClass().getFields();
+    public static <M> void merge(M target, M destination) throws IllegalAccessException {
+        Field[] fields = destination.getClass().getFields();
         for(Field field : fields) {
             field.setAccessible(true);
-            Object sourceValue = field.get(field);
-            Object dataValue = field.get(data);
-            if(sourceValue == null) {
-                sourceValue = dataValue;
-            } else if(dataValue != null) {  // source is not null
-                sourceValue = dataValue;
+            Object destinationValue = field.get(destination);
+            Object targetValue = field.get(target);
+            if(destinationValue == null) {
+                destinationValue = targetValue;
+            } else if(targetValue != null) {  // source is not null
+                destinationValue = targetValue;
             }
+            field.set(destination, destinationValue);
         }
     }
 

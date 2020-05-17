@@ -1,11 +1,11 @@
 package com.example.clipboard.client.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.Table;
+import oshi.SystemInfo;
+
+import javax.persistence.*;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table
@@ -20,6 +20,7 @@ public class Content {
 
     @Lob
     public String content;
+
     public Boolean star;
     public Boolean archive;
     public Boolean recycle;
@@ -75,14 +76,61 @@ public class Content {
     }
 
     public static enum ContentStatus {
-        CONTENT_STATUS_SYNCED(0),
-        CONTENT_STATUS_LOCAL(1),
-        CONTENT_STATUS_SYNCING(2),
-        CONTENT_STATUS_SYNC_FAILED(3);
+        CONTENT_STATUS_LOCAL(0),
+        CONTENT_STATUS_LOCAL_SYNCED(1),
+        CONTENT_STATUS_LOCAL_SYNCING(2),
+        CONTENT_STATUS_CLOUD(3),
+        CONTENT_STATUS_CLOUD_SYNCING(4),
+        CONTENT_STATUS_CLOUD_SYNCED(5);
         public int STATUS;
 
         ContentStatus(int status) {
             STATUS = status;
         }
     }
+
+    @Override
+    public String toString() {
+        return "Content{" +
+                "id='" + id + '\'' +
+                ", account='" + account + '\'' +
+                ", status=" + status +
+                ", device='" + device + '\'' +
+                ", content='" + content + '\'' +
+                ", star=" + star +
+                ", archive=" + archive +
+                ", recycle=" + recycle +
+                ", hash='" + hash + '\'' +
+                ", create=" + create +
+                ", update=" + update +
+                '}';
+    }
+
+    public void setDefaultIfAbsent() {
+        if(id == null)
+            id = UUID.randomUUID().toString();
+        if(account == null)
+            account = "local";
+        if(status == null)
+            status = ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
+        if(device == null)
+            device = (new SystemInfo()).getOperatingSystem().getVersionInfo().getVersion();
+        if(star == null)
+            star = false;
+        if(archive == null)
+            archive = false;
+        if(recycle == null)
+            recycle = false;
+        if(create == null)
+            create = new Date();
+        if(update == null)
+            update = new Date();
+    }
+
+    public static enum ContentDifference {
+        CONTENT_DIFFERENCE_TEXT,
+        CONTENT_DIFFERENCE_FLAG,
+    }
+
+
 }

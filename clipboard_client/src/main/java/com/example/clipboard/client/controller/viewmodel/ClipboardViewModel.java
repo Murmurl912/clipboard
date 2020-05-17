@@ -17,6 +17,8 @@ import java.util.Comparator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+//todo need change order
+
 @Component
 public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
 
@@ -80,36 +82,8 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
 
     @Override
     public void onApplicationEvent(ContentEvent contentEvent) {
-        switch (contentEvent.getEventType()) {
-            case CONTENT_EVENT_TYPE_DELETE: {
-                Content content = contentEvent.getBefore();
-                clipboard.remove(content);
-                star.remove(content);
-                archive.remove(content);
-                trash.remove(content);
-            }
-            break;
-
-            case CONTENT_EVENT_TYPE_UPDATE: {
-                Content content = contentEvent.getBefore();
-                Content now = contentEvent.getNow();
-                if (content.archive) {
-                    update(content, now, archive);
-                } else if (content.star) {
-                    update(content, now, star);
-                } else if (content.recycle) {
-                    update(content, now, trash);
-                }
-
-            }
-            break;
-
-            case CONTENT_EVENT_TYPE_CREATION: {
-                Content content = contentEvent.getNow();
-                clipboard.add(content);
-            }
-            break;
-        }
+        // handle content change
+        // reflect to in memory cache
     }
 
     private void update(Content content,

@@ -51,7 +51,7 @@ public class ClipboardReactiveService {
                                 content.update = null;
                                 content.create = null;
                                 content.account = null;
-                                CopyHelper.copyIfDifferent(source, content);
+                                CopyHelper.merge(source, content);
                                 source.update = new Date();
                                 return repository.save(source);
                             } catch (IllegalAccessException e) {

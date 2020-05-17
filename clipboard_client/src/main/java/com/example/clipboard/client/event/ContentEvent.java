@@ -5,19 +5,15 @@ import org.springframework.context.ApplicationEvent;
 
 public class ContentEvent extends ApplicationEvent {
 
-    private ContentEventType eventType;
-    private Content before;
-    private Content now;
+    private final Content before;
+    private final Content now;
 
-    public ContentEvent(Object source, Content before, Content now, ContentEventType type) {
+    public ContentEvent(Object source,
+                        Content before,
+                        Content now) {
         super(source);
-        this.eventType = type;
         this.before = before;
         this.now = now;
-    }
-
-    public ContentEventType getEventType() {
-        return eventType;
     }
 
     public Content getBefore() {

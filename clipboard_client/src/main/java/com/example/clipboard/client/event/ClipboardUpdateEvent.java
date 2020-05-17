@@ -2,11 +2,11 @@ package com.example.clipboard.client.event;
 
 import org.springframework.context.ApplicationEvent;
 
-public class ClipboardEvent extends ApplicationEvent {
+public class ClipboardUpdateEvent extends ApplicationEvent {
 
     public String content;
 
-    public ClipboardEvent(Object source, String content) {
+    public ClipboardUpdateEvent(Object source, String content) {
         super(source);
         this.content = content;
     }

@@ -1,6 +1,6 @@
 package com.example.clipboard.client.service.task;
 
-import com.example.clipboard.client.event.ClipboardEvent;
+import com.example.clipboard.client.event.ClipboardUpdateEvent;
 import com.example.clipboard.client.lifecycle.ApplicationStartEvent;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
@@ -13,19 +13,26 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+// todo implement a cached clipboard content queue for fast content comparision
+
 @Lazy(false)
 @Component
-public class ClipboardListener implements ApplicationListener<ApplicationStartEvent> {
+public class ClipboardSpyTask implements ApplicationListener<ApplicationStartEvent> {
 
+    // todo replace with a queue
     private final AtomicReference<String> before = new AtomicReference<>(null);
 
-    @Autowired
-    private ApplicationEventPublisher publisher;
+    private final ApplicationEventPublisher publisher;
+
+    public ClipboardSpyTask(ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
+    }
 
     @Override
     public void onApplicationEvent(ApplicationStartEvent applicationStartEvent) {
-        System.out.println("event: " + applicationStartEvent);
+        // todo do something on application start
     }
+
 
     @Scheduled(fixedDelay = 1000)
     public void checkClipboard() {
@@ -36,15 +43,12 @@ public class ClipboardListener implements ApplicationListener<ApplicationStartEv
                 String now = clipboard.getString();
                 if (before.get() == null) {
                     before.set(now);
-                    System.out.println("Changed: " + now);
                 } else {
                     if (!before.get().equals(now)) {
                         before.set(now);
-                        ClipboardEvent event = new ClipboardEvent(this, now);
+                        ClipboardUpdateEvent event = new ClipboardUpdateEvent(this, now);
                         publisher.publishEvent(event);
-                        System.out.println("Changed: " + now);
                     }
-                    ;
                 }
             }
             ;
