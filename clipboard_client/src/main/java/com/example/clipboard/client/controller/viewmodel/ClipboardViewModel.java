@@ -250,8 +250,8 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
         switch (Content.ContentState.get(event.getBefore().state)) {
             case CONTENT_STATE_NORMAL:
                 clipboard.remove(event.getBefore());
-                clipboard.add(event.getNow());
-                star.add(event.getNow());
+                clipboard.add(0, event.getNow());
+                star.add(0, event.getNow());
                 break;
             case CONTENT_STATE_ARCHIVE:
                 archive.remove(event.getBefore());
@@ -312,6 +312,7 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
         switch (Content.ContentState.get(event.getBefore().state)) {
             case CONTENT_STATE_STAR:
                 star.remove(event.getBefore());
+                clipboard.remove(event.getBefore());
                 break;
             case CONTENT_STATE_ARCHIVE:
                 archive.remove(event.getBefore());

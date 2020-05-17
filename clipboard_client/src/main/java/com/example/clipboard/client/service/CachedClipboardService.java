@@ -329,7 +329,8 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
 
     public List<Content> getClipboard() {
         ensureRepositoryNotNull();
-        return repository.getContentsByStateEquals(Content.ContentState.CONTENT_STATE_NORMAL.STATE);
+        return repository.getContentsByStateIn(Arrays.asList(Content.ContentState.CONTENT_STATE_NORMAL.STATE,
+                Content.ContentState.CONTENT_STATE_STAR.STATE));
     }
 
     public List<Content> getStar() {

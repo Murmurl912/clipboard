@@ -515,7 +515,7 @@ public class MainViewController {
                 switch (Content.ContentState.get(content.previous)) {
                     case CONTENT_STATE_NORMAL:
                     case CONTENT_STATE_STAR:
-                        clipboardViewModel.state(content.id, Content.ContentState.get(content.state))
+                        clipboardViewModel.state(content.id, Content.ContentState.get(content.previous))
                                 .subscribe();
                         break;
                     case CONTENT_STATE_ARCHIVE:
@@ -570,7 +570,7 @@ public class MainViewController {
                             context.getBean(ClipboardViewModel.class);
                 }
                 clipboardViewModel.state(content.id,
-                        Content.ContentState.CONTENT_STATE_ARCHIVE)
+                        Content.ContentState.CONTENT_STATE_RECYCLE)
                         .subscribe();
             case CONTENT_STATE_RECYCLE:
             case CONTENT_STATE_DELETE:
