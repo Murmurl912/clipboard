@@ -74,18 +74,38 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             content.hash = hash(content.content);
             Optional<Content> optionalContent = repository.
                     findContentByContentEqualsAndHashEquals(content.content, content.hash);
+
             if(optionalContent.isEmpty()) {
                 content.setDefaultIfAbsent();
+                content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
+                content.previous = content.state;
+                content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
                 Content saved = repository.save(content);
                 ContentCreateEvent event = new ContentCreateEvent(this, saved, saved);
                 publisher.publishEvent(event);
                 return saved;
             }
+
             content = optionalContent.get();
             Content old = new Content();
             BeanUtils.copyProperties(content, old);
             content.timestamp = new Date();
             content.update = new Date();
+
+            // what is same text is archived recycled or star
+            switch (Content.ContentState.get(content.state)) {
+                case CONTENT_STATE_NORMAL:
+                case CONTENT_STATE_STAR:
+                    break;
+                case CONTENT_STATE_RECYCLE:
+                case CONTENT_STATE_ARCHIVE:
+                case CONTENT_STATE_DELETE:
+                    content.state = content.previous;
+                    if(content.state == null) {
+                        content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
+                    }
+                    break;
+            }
             content = repository.save(content);
             ContentUpdateEvent event = new ContentUpdateEvent(this, old, content);
             publisher.publishEvent(event);
@@ -198,10 +218,31 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
 
             content.update = new Date();
             content.previous = old.state;
+            if(state == Content.ContentState.CONTENT_STATE_NORMAL) {
+                content.state = old.previous;
+            } else {
+                content.state = state.STATE;
+            }
             Content saved = repository.save(content);
-            ContentRecycleEvent contentRecycleEvent =
-                    new ContentRecycleEvent(this, old, saved);
-            publisher.publishEvent(contentRecycleEvent);
+            ContentEvent event = null;
+            switch (state) {
+                case CONTENT_STATE_NORMAL:
+                    event = new ContentNormalEvent(this, old, saved);
+                    break;
+                case CONTENT_STATE_STAR:
+                    event = new ContentStarEvent(this, old, saved);
+                    break;
+                case CONTENT_STATE_ARCHIVE:
+                    event = new ContentArchiveEvent(this, old, saved);
+                    break;
+                case CONTENT_STATE_RECYCLE:
+                    event = new ContentRecycleEvent(this, old, saved);
+                    break;
+                case CONTENT_STATE_DELETE:
+                    event = new ContentDeleteEvent(this, old, saved);
+                    break;
+            }
+            publisher.publishEvent(event);
             return saved;
         } else {
             throw new RuntimeException("Content State Invalid: " + content.state + " -> " + state);
@@ -355,6 +396,8 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         } else {
             data = contentOptional.get();
             data.timestamp = new Date();
+            data.update = new Date();
+
             data = repository.save(data);
             // an content time update event is generated
             event = new ContentUpdateEvent(this, contentOptional.get(), data);

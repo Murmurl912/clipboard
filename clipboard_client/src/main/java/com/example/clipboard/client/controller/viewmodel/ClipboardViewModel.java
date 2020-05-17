@@ -158,6 +158,9 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
         if(contentEvent instanceof ContentCreateEvent) {
             handle((ContentCreateEvent) contentEvent);
         }
+        if(contentEvent instanceof ContentNormalEvent) {
+            handle((ContentNormalEvent) contentEvent);
+        }
 
     }
 
@@ -277,6 +280,10 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
 
 
     private void handle(@NonNull ContentCreateEvent event) {
+
+    }
+
+    private void handle(@NonNull ContentNormalEvent event) {
 
     }
 
