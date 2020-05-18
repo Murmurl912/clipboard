@@ -118,6 +118,8 @@ public class MainViewController {
     @FXML
     private void initialize() {
 
+        container.setVerticalCellSpacing(10);
+        container.setHorizontalCellSpacing(0);
         container.setCellFactory(factory -> new CardCell(
                 cell -> {
                     try {
@@ -138,7 +140,7 @@ public class MainViewController {
                         Node archive = node.lookup("#archive");
                         cell.getHolder().put("archive", archive);
                         Node container = node.lookup("#container");
-
+                        cell.getHolder().put("restore", node.lookup("#restore"));
                         copy.setOnMouseClicked(e -> {
                             copy(cell.getIndex(), cell.getItem());
                         });
@@ -170,9 +172,14 @@ public class MainViewController {
                         return;
                     }
 
-                    Label label = ((Label) cell.getHolder().get("title"));
-                    ((Label) cell.getHolder().get("content"))
-                            .setText(content.content);
+                    Node star = cell.getHolder().get("star");
+                    Node archive = cell.getHolder().get("archive");
+                    Node copy = cell.getHolder().get("copy");
+                    Node restore = cell.getHolder().get("restore");
+                    Node delete = cell.getHolder().get("delete");
+                    Node label = cell.getHolder().get("content");
+                    ((Label)label).setText(content.content);
+
                     if (content.state == Content.ContentState.CONTENT_STATE_STAR.STATE) {
                         ((FontAwesomeIconView) ((JFXButton) cell.getHolder().get("star")).getGraphic())
                                 .setIcon(FontAwesomeIcon.STAR);
@@ -182,23 +189,32 @@ public class MainViewController {
                     }
                     ((Label) cell.getHolder().get("time"))
                             .setText(DateFormat.getDateTimeInstance().format(content.update));
-
                     switch (Content.ContentState.get(content.state)) {
                         case CONTENT_STATE_NORMAL:
                         case CONTENT_STATE_STAR:
+                            archive.setManaged(true);
+                            archive.setVisible(true);
+                            star.setManaged(true);
+                            star.setVisible(true);
+                            restore.setVisible(false);
+                            restore.setManaged(false);
+                            break;
                         case CONTENT_STATE_ARCHIVE:
-
                         case CONTENT_STATE_RECYCLE:
+                            archive.setManaged(false);
+                            archive.setVisible(false);
+                            star.setVisible(false);
+                            star.setManaged(false);
+                            restore.setVisible(true);
+                            restore.setManaged(true);
+                            break;
                         default:
                     }
                 }));
         container.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number old, Number now) {
-                if (Math.abs(old.doubleValue() - now.doubleValue()) > 30) {
-                    return;
-                }
-                double max = now.doubleValue() - 40;
+                double max = now.doubleValue();
                 container.setCellWidth(max);
             }
         });
@@ -433,6 +449,8 @@ public class MainViewController {
                     context.getBean(ClipboardViewModel.class);
         }
         clearListener();
+        // when no item found listener won't be called
+        container.getItems().clear();
         clipboardViewModel.getArchive().addListener(archiveListener);
         clipboardViewModel.refreshArchive();
     }
@@ -444,6 +462,7 @@ public class MainViewController {
                     context.getBean(ClipboardViewModel.class);
         }
         clearListener();
+        container.getItems().clear();
         clipboardViewModel.getStar().addListener(starListener);
         clipboardViewModel.refreshStar();
     }
@@ -455,6 +474,7 @@ public class MainViewController {
                     context.getBean(ClipboardViewModel.class);
         }
         clearListener();
+        container.getItems().clear();
         clipboardViewModel.getTrash().addListener(recycleListener);
         clipboardViewModel.refreshRecycle();
     }
@@ -466,6 +486,7 @@ public class MainViewController {
                     context.getBean(ClipboardViewModel.class);
         }
         clearListener();
+        container.getItems().clear();
         clipboardViewModel.getClipboard().addListener(clipboardListener);
         clipboardViewModel.refreshClipboard();
     }
@@ -572,10 +593,23 @@ public class MainViewController {
                 clipboardViewModel.state(content.id,
                         Content.ContentState.CONTENT_STATE_RECYCLE)
                         .subscribe();
+                break;
             case CONTENT_STATE_RECYCLE:
+                if (clipboardViewModel == null) {
+                    clipboardViewModel =
+                            context.getBean(ClipboardViewModel.class);
+                }
+                clipboardViewModel.state(content.id,
+                        Content.ContentState.CONTENT_STATE_DELETE)
+                        .subscribe();
+                break;
             case CONTENT_STATE_DELETE:
                 throw new RuntimeException("Cannot recycle content: " + content);
         }
+    }
+
+    private void recover(int index, Content content) {
+        content = container.getItems().get(index);
     }
 
     private void toggleMenu() {

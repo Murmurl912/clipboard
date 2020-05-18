@@ -257,10 +257,12 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
                 archive.remove(event.getBefore());
                 clipboard.add(event.getNow());
                 star.add(event.getNow());
+                break;
             case CONTENT_STATE_RECYCLE:
                 trash.remove(event.getBefore());
                 clipboard.add(event.getNow());
                 star.add(event.getNow());
+                break;
             case CONTENT_STATE_STAR:
             case CONTENT_STATE_DELETE:
             default: throw new IllegalStateException("Cannot star a stared or deleted content");
@@ -268,7 +270,7 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
     }
 
     private void handle(@NonNull ContentRecycleEvent event) {
-        switch (Content.ContentState.get(event.getNow().state)) {
+        switch (Content.ContentState.get(event.getBefore().state)) {
             case CONTENT_STATE_NORMAL:
                 clipboard.remove(event.getBefore());
                 trash.add(event.getNow());
@@ -281,6 +283,7 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
             case CONTENT_STATE_ARCHIVE:
                 archive.remove(event.getBefore());
                 trash.add(event.getNow());
+                break;
             case CONTENT_STATE_RECYCLE:
             case CONTENT_STATE_DELETE:
             default: throw new IllegalStateException("Cannot recycle a recycled or deleted content");

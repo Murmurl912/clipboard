@@ -3,6 +3,7 @@ package com.example.clipboard.client.entity;
 import oshi.SystemInfo;
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
@@ -24,13 +25,13 @@ public class Content {
 
     @Lob
     public String content;
-    public Date timestamp;
+    public Timestamp timestamp;
     public Integer previous; // for example when a content is recycled previous state should be keep
     public Integer state;
     public String hash;
 
-    public Date create;
-    public Date update;
+    public Timestamp create;
+    public Timestamp update;
 
     public Content() {
 
@@ -41,12 +42,12 @@ public class Content {
                    ContentStatus status,
                    String device,
                    String content,
-                   Date timestamp,
+                   Timestamp timestamp,
                    ContentState previous,
                    ContentState state,
                    String hash,
-                   Date create,
-                   Date update) {
+                   Timestamp create,
+                   Timestamp update) {
         this.id = id;
         this.account = account;
         this.status = status.STATUS;
@@ -100,11 +101,11 @@ public class Content {
         this.content = content;
     }
 
-    public Date getTimestamp() {
+    public Timestamp getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(Timestamp timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -132,19 +133,19 @@ public class Content {
         this.hash = hash;
     }
 
-    public Date getCreate() {
+    public Timestamp getCreate() {
         return create;
     }
 
-    public void setCreate(Date create) {
+    public void setCreate(Timestamp create) {
         this.create = create;
     }
 
-    public Date getUpdate() {
+    public Timestamp getUpdate() {
         return update;
     }
 
-    public void setUpdate(Date update) {
+    public void setUpdate(Timestamp update) {
         this.update = update;
     }
 
@@ -204,11 +205,11 @@ public class Content {
         if(previous == null)
             previous = state;
         if(timestamp == null)
-            timestamp = new Date();
+            timestamp = new Timestamp(System.currentTimeMillis());
         if(create == null)
-            create = new Date();
+            create = new Timestamp(System.currentTimeMillis());
         if(update == null)
-            update = new Date();
+            update = new Timestamp(System.currentTimeMillis());
     }
 
     public static enum ContentStatus {

@@ -13,17 +13,18 @@
 
 <?import org.controlsfx.control.GridView?>
 <?import javafx.scene.layout.StackPane?>
+<?import de.jensd.fx.glyphs.materialicons.MaterialIconView?>
+<?import java.net.URL?>
 <StackPane maxHeight="-Infinity" maxWidth="600" minHeight="-Infinity" minWidth="400" prefHeight="400.0"
            prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.example.clipboard.client.controller.MainViewController"
            fx:id="root"
 >
 
+   <stylesheets>
+      <URL value="@/style/main.css" />
+   </stylesheets>
    <VBox>
-      <padding>
-         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
-      </padding>
-
       <JFXToolbar style="-fx-background-color: #fafafa;">
          <left>
             <JFXButton fx:id="menuToggle" BorderPane.alignment="CENTER" focusTraversable="false">
@@ -51,16 +52,14 @@
                </JFXButton>
             </HBox>
          </center>
-
+         <VBox.margin>
+            <Insets right="10" top="10" left="10"/>
+         </VBox.margin>
          <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
          </padding>
       </JFXToolbar>
       <HBox VBox.vgrow="ALWAYS">
-
-         <padding>
-            <Insets bottom="10.0" top="10.0"/>
-         </padding>
 
          <JFXToolbar style="-fx-background-color: #fafafa;" fx:id="menu">
             <center>
@@ -92,7 +91,7 @@
                   <JFXButton focusTraversable="false" alignment="TOP_LEFT" layoutX="10.0" layoutY="36.0" maxWidth="1.7976931348623157E308"
                              text="Trash" fx:id="trash">
                      <graphic>
-                        <FontAwesomeIconView glyphName="TRASH"/>
+                        <FontAwesomeIconView glyphName="RECYCLE"/>
                      </graphic>
                   </JFXButton>
                   <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS"/>
@@ -116,12 +115,16 @@
                   </JFXButton>
                </VBox>
             </center>
-            <padding>
-               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-            </padding>
+            <HBox.margin>
+               <Insets top="10" left="10" bottom="10"/>
+            </HBox.margin>
          </JFXToolbar>
+
          <GridView fx:id="container"  maxWidth="1.7976931348623157E308"
                    maxHeight="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+            <HBox.margin>
+               <Insets top="10" bottom="10"/>
+            </HBox.margin>
          </GridView>
       </HBox>
    </VBox>

@@ -81,7 +81,7 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
                 content.previous = content.state;
                 content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
                 SystemInfo systemInfo = new SystemInfo();
-                content.device = systemInfo.getOperatingSystem().getVersionInfo().getVersion();
+                content.device = systemInfo.getOperatingSystem().getVersionInfo().toString();
                 content.setDefaultIfAbsent();
                 Content saved = repository.save(content);
                 ContentCreateEvent event = new ContentCreateEvent(this, saved, saved);
@@ -92,8 +92,8 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             content = optionalContent.get();
             Content old = new Content();
             BeanUtils.copyProperties(content, old);
-            content.timestamp = new Date();
-            content.update = new Date();
+            content.timestamp = new Timestamp(System.currentTimeMillis());
+            content.update = new Timestamp(System.currentTimeMillis());
 
             // what is same text is archived recycled or star
             switch (Content.ContentState.get(content.state)) {
@@ -134,7 +134,7 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
                 content.previous = content.state;
             }
 
-            content.timestamp = new Date();
+            content.timestamp = new Timestamp(System.currentTimeMillis());
             Content saved = repository.save(content);
             ContentCreateEvent contentCreateEvent = new ContentCreateEvent(this, saved, saved);
             publisher.publishEvent(contentCreateEvent);
@@ -161,14 +161,14 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         }
 
         PojoCopyHelper.merge(content, destination);
-        destination.update = new Date();
+        destination.update = new Timestamp(System.currentTimeMillis());
 
         if(contentChangeFlag) {
-            destination.timestamp = new Date();
+            destination.timestamp = new Timestamp(System.currentTimeMillis());
         }
 
         if(stateChangeFlag) {
-            destination.timestamp = new Date();
+            destination.timestamp = new Timestamp(System.currentTimeMillis());
             destination.previous = old.state;
         }
 
@@ -219,7 +219,7 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         BeanUtils.copyProperties(content, old);
         if(isStateChangeValid(Content.ContentState.get(content.state), state)) {
 
-            content.update = new Date();
+            content.update = new Timestamp(System.currentTimeMillis());
             content.previous = old.state;
             content.state = state.STATE;
             Content saved = repository.save(content);
@@ -261,8 +261,8 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         Content old = new Content();
         BeanUtils.copyProperties(content, old);
         content.content = text;
-        content.update = new Date();
-        content.timestamp = new Date();
+        content.update = new Timestamp(System.currentTimeMillis());
+        content.timestamp = new Timestamp(System.currentTimeMillis());
         /*
         todo prevent conflicts in modified content
          */
