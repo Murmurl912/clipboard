@@ -8,7 +8,7 @@ import com.example.clipboard.server.exception.RequestBessyException;
 import com.example.clipboard.server.helper.RandomHelper;
 import com.example.clipboard.server.repository.VerificationCodeRepository;
 import com.example.clipboard.server.repository.VerificationRecordRepository;
-import com.example.clipboard.server.service.evnet.SendMailEvent;
+import com.example.clipboard.server.service.event.SendMailEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.lang.NonNull;
 import org.springframework.mail.SimpleMailMessage;

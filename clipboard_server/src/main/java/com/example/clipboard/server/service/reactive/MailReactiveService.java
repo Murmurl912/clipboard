@@ -1,7 +1,7 @@
 package com.example.clipboard.server.service.reactive;
 
 
-import com.example.clipboard.server.service.evnet.SendMailEvent;
+import com.example.clipboard.server.service.event.SendMailEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.lang.NonNull;
 import org.springframework.mail.MailMessage;

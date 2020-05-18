@@ -30,7 +30,6 @@ public class ClipboardReactiveService {
                                 sink.error(new UserNotFoundException());
                                 return;
                             }
-                            content.archive = false;
                             content.create = new Date();
                             content.update = new Date();
                             sink.next(content);

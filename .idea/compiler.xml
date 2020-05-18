@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="clipboard_client" />
         <module name="clipboard_server" />
+        <module name="clipboard_store" />
         <module name="clipboard" />
       </profile>
     </annotationProcessing>
@@ -19,6 +20,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="clipboard_client" options="-parameters" />
       <module name="clipboard_server" options="-parameters" />
+      <module name="clipboard_store" options="-parameters" />
     </option>
   </component>
 </project>

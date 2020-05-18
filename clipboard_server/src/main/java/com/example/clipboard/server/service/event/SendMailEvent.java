@@ -1,4 +1,4 @@
-package com.example.clipboard.server.service.evnet;
+package com.example.clipboard.server.service.event;
 
 import org.springframework.context.ApplicationEvent;
 import org.springframework.mail.MailMessage;

@@ -6,7 +6,6 @@ public class Content {
     public String id;
     public String account;
 
-    public String device;
     public String content;
     public String hash;
     public Boolean star;

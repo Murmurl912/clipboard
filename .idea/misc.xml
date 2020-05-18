@@ -8,6 +8,7 @@
         <option value="$PROJECT_DIR$/clipboard_server/pom.xml" />
         <option value="$PROJECT_DIR$/clipboard_clitent/pom.xml" />
         <option value="$PROJECT_DIR$/clipboard_client/pom.xml" />
+        <option value="$PROJECT_DIR$/clipboard_store/pom.xml" />
       </list>
     </option>
   </component>
