@@ -25,7 +25,6 @@ public class Content {
 
     @Lob
     public String content;
-    public Timestamp timestamp;
     public Boolean star;
     public Integer state;
     public String hash;
@@ -52,7 +51,6 @@ public class Content {
         this.status = status.STATUS;
         this.device = device;
         this.content = content;
-        this.timestamp = timestamp;
         this.state = state.STATE;
         this.hash = hash;
         this.create = create;
@@ -97,14 +95,6 @@ public class Content {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public Timestamp getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Timestamp timestamp) {
-        this.timestamp = timestamp;
     }
 
     public Integer getState() {
@@ -157,7 +147,6 @@ public class Content {
                 Objects.equals(status, content1.status) &&
                 Objects.equals(device, content1.device) &&
                 Objects.equals(content, content1.content) &&
-                Objects.equals(timestamp, content1.timestamp) &&
                 Objects.equals(state, content1.state) &&
                 Objects.equals(hash, content1.hash) &&
                 Objects.equals(create, content1.create) &&
@@ -166,7 +155,7 @@ public class Content {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, account, status, device, content, timestamp, state, hash, create, update);
+        return Objects.hash(id, account, status, device, content, state, hash, create, update);
     }
 
 
@@ -178,7 +167,6 @@ public class Content {
                 ", status=" + status +
                 ", device='" + device + '\'' +
                 ", content='" + content + '\'' +
-                ", timestamp=" + timestamp +
                 ", state=" + state +
                 ", hash='" + hash + '\'' +
                 ", create=" + create +
@@ -200,8 +188,6 @@ public class Content {
             state = ContentState.CONTENT_STATE_NORMAL.STATE;
         if(star == null)
             star = false;
-        if(timestamp == null)
-            timestamp = new Timestamp(System.currentTimeMillis());
         if(create == null)
             create = new Timestamp(System.currentTimeMillis());
         if(update == null)

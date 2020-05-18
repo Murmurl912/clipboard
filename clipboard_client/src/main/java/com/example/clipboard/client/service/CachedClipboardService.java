@@ -82,18 +82,18 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
                 content.star = false;
                 content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
                 SystemInfo systemInfo = new SystemInfo();
+                content.update = new Timestamp(System.currentTimeMillis());
                 content.device = systemInfo.getOperatingSystem().getVersionInfo().toString();
                 content.setDefaultIfAbsent();
-                Content saved = repository.save(content);
-                ContentCreateEvent event = new ContentCreateEvent(this, saved, saved);
+                content = repository.save(content);
+                ContentCreateEvent event = new ContentCreateEvent(this, content, content);
                 publisher.publishEvent(event);
-                return saved;
+                return content;
             }
 
             content = optionalContent.get();
             Content old = new Content();
             BeanUtils.copyProperties(content, old);
-            content.timestamp = new Timestamp(System.currentTimeMillis());
             content.update = new Timestamp(System.currentTimeMillis());
 
             // when content with same text is archived, recycled or deleted
@@ -115,6 +115,7 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             if(StringUtils.isEmpty(content.content)) {
                 throw new RuntimeException("Content is empty: " + content);
             }
+
             if(StringUtils.isEmpty(content.hash)) {
                 content.hash = hash(content.content);
             }
@@ -129,9 +130,9 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
                 content.star = false;
                 content.update = new Timestamp(System.currentTimeMillis());
             }
-            content.timestamp = new Timestamp(System.currentTimeMillis());
-            Content saved = repository.save(content);
-            ContentCreateEvent contentCreateEvent = new ContentCreateEvent(this, saved, saved);
+            content.setDefaultIfAbsent();
+            content = repository.save(content);
+            ContentCreateEvent contentCreateEvent = new ContentCreateEvent(this, content, content);
             publisher.publishEvent(contentCreateEvent);
             return content;
         }
@@ -147,9 +148,9 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         // content is update
         if(content.content != null && !content.content.equals(old.content)) {
             destination.update = new Timestamp(System.currentTimeMillis());
-            destination.timestamp = new Timestamp(System.currentTimeMillis());
             destination.hash = hash(destination.content);
             destination = repository.save(destination);
+            destination.setDefaultIfAbsent();
             ContentUpdateEvent contentUpdateEvent = new ContentUpdateEvent(this, old, destination);
             publisher.publishEvent(contentUpdateEvent);
         } else if(content.star != null && !content.star.equals(old.star)) {
@@ -157,8 +158,8 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             if(destination.star == null) {
                 destination.star = false;
             }
+            destination.setDefaultIfAbsent();
             destination.update = new Timestamp(System.currentTimeMillis());
-            destination.timestamp = new Timestamp(System.currentTimeMillis());
             destination = repository.save(destination);
             ContentStarEvent contentStarEvent = new ContentStarEvent(this, old, destination);
         } else {
@@ -235,11 +236,8 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         BeanUtils.copyProperties(content, old);
         content.content = text;
         content.update = new Timestamp(System.currentTimeMillis());
-        content.timestamp = new Timestamp(System.currentTimeMillis());
-        /*
-        todo prevent conflicts in modified content
-         */
-        content.hash = hash(content.content + new Date());
+        // todo prevent conflicts in modified content
+        content.hash = hash(content.content);
         content = repository.save(content);
         ContentUpdateEvent event = new ContentUpdateEvent(this, old, content);
         publisher.publishEvent(event);

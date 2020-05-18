@@ -18,7 +18,7 @@ public class Account {
 
     // local timestamp
     public Timestamp local;
-    // cloud timestamp
-    public Timestamp cloud;
+    // sync timestamp
+    public Timestamp sync;
 
 }

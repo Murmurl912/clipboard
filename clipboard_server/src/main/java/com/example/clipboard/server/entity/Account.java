@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 @Document
@@ -19,6 +20,8 @@ public class Account {
     public Date latestEmailChange;
     public String oldEmail;
     public Integer status;
+
+    public Timestamp timestamp;
 
     public Date create;
     public Date update;

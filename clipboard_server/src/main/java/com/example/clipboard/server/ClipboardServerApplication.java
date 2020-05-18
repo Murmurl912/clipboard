@@ -34,7 +34,7 @@ public class ClipboardServerApplication {
                 .pathMatchers(HttpMethod.POST, "/account/*/activation").permitAll() // account activation
                 .pathMatchers(HttpMethod.GET, "/account/*/password").permitAll() // password reset
                 .pathMatchers(HttpMethod.POST, "/account/*/password").permitAll() // password reset
-                .anyExchange().authenticated()
+                .anyExchange().permitAll() // todo disable security
                 .and()
                 .csrf()
                 .disable()
