@@ -3,6 +3,7 @@ package com.example.clipboard.client.entity;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.sql.Timestamp;
 
 
 @Entity
@@ -14,4 +15,10 @@ public class Account {
     public String token;
     public String email;
     public String avatar;
+
+    // local timestamp
+    public Timestamp local;
+    // cloud timestamp
+    public Timestamp cloud;
+
 }

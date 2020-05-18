@@ -7,18 +7,10 @@ public class Content {
     public String account;
 
     public String device;
-    public String deviceType;
-    public String deviceOs;
-
-    public String title;
     public String content;
+    public String hash;
     public Boolean star;
-    public Boolean archive;
-
-    public Boolean attached;
-    public String attachment;
-    public Long size;
-    public byte[] binary;
+    public Integer state;
 
     public Date create;
     public Date update;

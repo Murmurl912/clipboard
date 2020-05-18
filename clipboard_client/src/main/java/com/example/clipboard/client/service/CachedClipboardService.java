@@ -142,8 +142,6 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         Content destination = new Content();
         BeanUtils.copyProperties(old, destination);
 
-        // star flag is updated
-
 
         PojoCopyHelper.merge(content, destination);
         // content is update
