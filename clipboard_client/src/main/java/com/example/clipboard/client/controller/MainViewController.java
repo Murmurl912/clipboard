@@ -9,21 +9,26 @@ import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXToolbar;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import io.reactivex.rxjava3.disposables.Disposable;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.InputMethodEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.controlsfx.control.GridView;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
@@ -73,6 +78,9 @@ public class MainViewController {
     private Resource activateView;
     @Value("classpath:view/card_cell.fxml")
     private Resource cardCellView;
+    @Value("classpath:view/content_details.fxml")
+    private Resource contentDetailView;
+
     private ClipboardViewModel clipboardViewModel;
 
     private final ListChangeListener<Content>
@@ -140,7 +148,8 @@ public class MainViewController {
                         Node archive = node.lookup("#archive");
                         cell.getHolder().put("archive", archive);
                         Node container = node.lookup("#container");
-                        cell.getHolder().put("restore", node.lookup("#restore"));
+                        Node restore = node.lookup("#restore");
+                        cell.getHolder().put("restore", restore);
                         copy.setOnMouseClicked(e -> {
                             copy(cell.getIndex(), cell.getItem());
                         });
@@ -151,7 +160,7 @@ public class MainViewController {
 
                         container.setOnMouseClicked(e -> {
                             if (e.getClickCount() == 2) {
-                                open(cell.getIndex(), cell.getItem());
+                                details(cell.getIndex(), cell.getItem());
                             }
                         });
 
@@ -161,6 +170,10 @@ public class MainViewController {
 
                         archive.setOnMouseClicked(e -> {
                             archive(cell.getIndex(), cell.getItem());
+                        });
+
+                        restore.setOnMouseClicked(e -> {
+                            recover(cell.getIndex(), cell.getItem());
                         });
 
                     } catch (IOException e) {
@@ -180,7 +193,7 @@ public class MainViewController {
                     Node label = cell.getHolder().get("content");
                     ((Label)label).setText(content.content);
 
-                    if (content.state == Content.ContentState.CONTENT_STATE_STAR.STATE) {
+                    if (content.star) {
                         ((FontAwesomeIconView) ((JFXButton) cell.getHolder().get("star")).getGraphic())
                                 .setIcon(FontAwesomeIcon.STAR);
                     } else {
@@ -191,7 +204,6 @@ public class MainViewController {
                             .setText(DateFormat.getDateTimeInstance().format(content.update));
                     switch (Content.ContentState.get(content.state)) {
                         case CONTENT_STATE_NORMAL:
-                        case CONTENT_STATE_STAR:
                             archive.setManaged(true);
                             archive.setVisible(true);
                             star.setManaged(true);
@@ -438,7 +450,6 @@ public class MainViewController {
         dialog.lookup("#cancel")
                 .setOnMouseClicked(e -> dialog.close());
         dialog.show();
-        ;
     }
 
     // todo refactor code
@@ -520,7 +531,6 @@ public class MainViewController {
         content = container.getItems().get(index);
         switch (Content.ContentState.get(content.state)) {
             case CONTENT_STATE_NORMAL:
-            case CONTENT_STATE_STAR:
                 if (clipboardViewModel == null) {
                     clipboardViewModel =
                             context.getBean(ClipboardViewModel.class);
@@ -533,20 +543,10 @@ public class MainViewController {
                     clipboardViewModel =
                             context.getBean(ClipboardViewModel.class);
                 }
-                switch (Content.ContentState.get(content.previous)) {
-                    case CONTENT_STATE_NORMAL:
-                    case CONTENT_STATE_STAR:
-                        clipboardViewModel.state(content.id, Content.ContentState.get(content.previous))
-                                .subscribe();
-                        break;
-                    case CONTENT_STATE_ARCHIVE:
-                    case CONTENT_STATE_RECYCLE:
-                        clipboardViewModel.state(content.id, Content.ContentState.CONTENT_STATE_NORMAL);
-                        break;
-                    case CONTENT_STATE_DELETE:
-                    default: throw new RuntimeException("Cannot unarchive: " + content);
-                }
+                clipboardViewModel.state(content.id, Content.ContentState.CONTENT_STATE_NORMAL);
                 break;
+            case CONTENT_STATE_RECYCLE:
+            case CONTENT_STATE_DELETE:
             default:
                 throw new RuntimeException("Cannot archive content: " + content);
 
@@ -557,24 +557,16 @@ public class MainViewController {
         content = container.getItems().get(index);
         switch (Content.ContentState.get(content.state)) {
             case CONTENT_STATE_NORMAL:
+                if (clipboardViewModel == null) {
+                    clipboardViewModel =
+                            context.getBean(ClipboardViewModel.class);
+                }
+                clipboardViewModel.star(content.id, !content.star)
+                        .subscribe();
+                break;
             case CONTENT_STATE_ARCHIVE:
-                if (clipboardViewModel == null) {
-                    clipboardViewModel =
-                            context.getBean(ClipboardViewModel.class);
-                }
-                clipboardViewModel.state(content.id,
-                        Content.ContentState.CONTENT_STATE_STAR)
-                        .subscribe();
-                break;
-            case CONTENT_STATE_STAR:
-                if (clipboardViewModel == null) {
-                    clipboardViewModel =
-                            context.getBean(ClipboardViewModel.class);
-                }
-                clipboardViewModel.state(content.id,
-                        Content.ContentState.CONTENT_STATE_NORMAL)
-                        .subscribe();
-                break;
+            case CONTENT_STATE_RECYCLE:
+            case CONTENT_STATE_DELETE:
             default:
                 throw new RuntimeException("Cannot star content: " + content);
         }
@@ -583,7 +575,6 @@ public class MainViewController {
     private void delete(int index, Content content) {
         content = container.getItems().get(index);
         switch (Content.ContentState.get(content.state)) {
-            case CONTENT_STATE_STAR:
             case CONTENT_STATE_ARCHIVE:
             case CONTENT_STATE_NORMAL:
                 if (clipboardViewModel == null) {
@@ -610,6 +601,286 @@ public class MainViewController {
 
     private void recover(int index, Content content) {
         content = container.getItems().get(index);
+        switch (Content.ContentState.get(content.state)) {
+            case CONTENT_STATE_ARCHIVE:
+            case CONTENT_STATE_RECYCLE:
+                if (clipboardViewModel == null) {
+                    clipboardViewModel =
+                            context.getBean(ClipboardViewModel.class);
+                }
+                clipboardViewModel.state(content.id,
+                        Content.ContentState.CONTENT_STATE_NORMAL)
+                        .subscribe();
+                break;
+            case CONTENT_STATE_DELETE:
+            case CONTENT_STATE_NORMAL:
+            default: throw new RuntimeException("Cannot recover a deleted or normal content: " + content);
+        }
+    }
+
+    private void details(int index, Content content) {
+        content = container.getItems().get(index);
+        Content data = new Content();
+        BeanUtils.copyProperties(content, data);
+        JFXDialog dialog = dialog(load(contentDetailView));
+        switch (Content.ContentState.get(content.getState())) {
+            case CONTENT_STATE_NORMAL:
+                normalDetails(dialog, data);
+                break;
+            case CONTENT_STATE_RECYCLE:
+            case CONTENT_STATE_ARCHIVE:
+                archiveOrRecycleDetails(dialog, content);
+                break;
+        }
+    }
+
+    private void normalDetails(JFXDialog dialog, Content data) {
+        // load view
+        TextArea textArea = (TextArea)dialog.lookup("#content");
+        Node copy = dialog.lookup("#copy");
+        Node cancel = dialog.lookup("#cancel");
+        Node star = dialog.lookup("#star");
+        Node ok = dialog.lookup("#ok");
+        Node archive = dialog.lookup("#archive");
+        Node delete = dialog.lookup("#delete");
+        Node device = dialog.lookup("#device");
+        Label label = (Label)dialog.lookup("#time");
+        Node edit = dialog.lookup("#edit");
+
+        // initialize
+        textArea.setText(data.content);
+        textArea.setEditable(false);
+        ok.setManaged(false);
+        ok.setVisible(false);
+
+        if(data.star) {
+            ((FontAwesomeIconView)((JFXButton)star).getGraphic()).setIcon(FontAwesomeIcon.STAR);
+        } else {
+            ((FontAwesomeIconView)((JFXButton)star).getGraphic()).setIcon(FontAwesomeIcon.STAR_ALT);
+        }
+
+        // listener
+
+        star.setOnMouseClicked(e -> {
+            if(textArea.isEditable()) {
+                return;
+            }
+
+            Disposable subscribe = clipboardViewModel.star(data.id, !data.star)
+                    .subscribe(c -> {
+                        BeanUtils.copyProperties(c, data);
+                        if(data.star) {
+                            ((FontAwesomeIconView)((JFXButton)star).getGraphic()).setIcon(FontAwesomeIcon.STAR);
+                        } else {
+                            ((FontAwesomeIconView)((JFXButton)star).getGraphic()).setIcon(FontAwesomeIcon.STAR_ALT);
+                        }
+                    });
+
+        });
+
+        edit.setOnMouseClicked(e -> {
+            ok.setVisible(true);
+            ok.setManaged(true);
+            edit.setVisible(false);
+            edit.setManaged(false);
+            star.setVisible(false);
+            star.setManaged(false);
+            copy.setVisible(false);
+            copy.setManaged(false);
+            delete.setVisible(false);
+            delete.setManaged(false);
+            archive.setManaged(false);
+            archive.setVisible(false);
+            textArea.setEditable(true);
+        });
+
+        cancel.setOnMouseClicked(e -> {
+            if(textArea.isEditable()) {
+                textArea.setEditable(false);
+                ok.setVisible(false);
+                ok.setManaged(false);
+                edit.setManaged(true);
+                edit.setVisible(true);
+                star.setVisible(true);
+                star.setManaged(true);
+                copy.setVisible(true);
+                copy.setManaged(true);
+                delete.setVisible(true);
+                delete.setManaged(true);
+                archive.setManaged(true);
+                archive.setVisible(true);
+                textArea.setText(data.content);
+            } else {
+                dialog.close();
+            }
+        });
+
+        ok.setOnMouseClicked(e -> {
+            if(textArea.isEditable()) {
+                textArea.setEditable(false);
+                ok.setVisible(false);
+                ok.setManaged(false);
+                edit.setManaged(true);
+                edit.setVisible(true);
+                star.setVisible(true);
+                star.setManaged(true);
+                copy.setVisible(true);
+                copy.setManaged(true);
+                delete.setVisible(true);
+                delete.setManaged(true);
+                archive.setManaged(true);
+                archive.setVisible(true);
+
+                Disposable subscribe = clipboardViewModel.text(data.id, textArea.getText())
+                        .subscribe(c -> {
+                            BeanUtils.copyProperties(c, data);
+                        });
+            }
+        });
+
+        copy.setOnMouseClicked(e -> {
+            if(!textArea.isEditable()) {
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent clipboardContent = new ClipboardContent();
+                clipboardContent.putString(textArea.getText());
+                clipboard.setContent(clipboardContent);
+            }
+            dialog.close();
+        });
+
+        archive.setOnMouseClicked(e -> {
+            if(textArea.isEditable()) {
+                return;
+            }
+
+            if(data.state != Content.ContentState.CONTENT_STATE_NORMAL.STATE) {
+                return;
+            }
+
+            Disposable subscribe = clipboardViewModel.state(data.id,
+                    Content.ContentState.CONTENT_STATE_ARCHIVE)
+                    .subscribe(c -> {
+                        BeanUtils.copyProperties(c, data);
+                    });
+            dialog.close();
+        });
+
+        delete.setOnMouseClicked(e -> {
+            if(textArea.isEditable()) {
+                return;
+            }
+
+            switch (Content.ContentState.get(data.state)) {
+                case CONTENT_STATE_NORMAL:
+                case CONTENT_STATE_ARCHIVE:
+                    Disposable subscribe = clipboardViewModel.state(data.id,
+                            Content.ContentState.CONTENT_STATE_RECYCLE)
+                            .subscribe(c -> {
+                                BeanUtils.copyProperties(c, data);
+                            });
+                    break;
+                case CONTENT_STATE_RECYCLE:
+                case CONTENT_STATE_DELETE:
+            }
+            dialog.close();
+        });
+
+        dialog.show();
+    }
+
+    private void archiveOrRecycleDetails(JFXDialog dialog, Content data) {
+        // load view
+        TextArea textArea = (TextArea)dialog.lookup("#content");
+        Node copy = dialog.lookup("#copy");
+        Node cancel = dialog.lookup("#cancel");
+        Node star = dialog.lookup("#star");
+        Node ok = dialog.lookup("#ok");
+        Node archive = dialog.lookup("#archive");
+        Node delete = dialog.lookup("#delete");
+        Node device = dialog.lookup("#device");
+        Label label = (Label)dialog.lookup("#time");
+        Node edit = dialog.lookup("#edit");
+        Node recover = dialog.lookup("#recover");
+
+        // initialize
+        textArea.setText(data.content);
+        textArea.setEditable(false);
+
+        ok.setManaged(false);
+        ok.setVisible(false);;
+
+        star.setVisible(true);
+        star.setManaged(true);
+        star.setDisable(true);
+
+        edit.setVisible(false);
+        edit.setManaged(false);
+
+        archive.setVisible(false);
+        archive.setManaged(false);
+
+        recover.setManaged(true);
+        recover.setVisible(true);
+
+        if(data.star) {
+            ((FontAwesomeIconView)((JFXButton)star).getGraphic()).setIcon(FontAwesomeIcon.STAR);
+        } else {
+            ((FontAwesomeIconView)((JFXButton)star).getGraphic()).setIcon(FontAwesomeIcon.STAR_ALT);
+        }
+
+        recover.setOnMouseClicked(e -> {
+            switch (Content.ContentState.get(data.state)) {
+                case CONTENT_STATE_ARCHIVE:
+                case CONTENT_STATE_RECYCLE:
+                    Disposable subscribe = clipboardViewModel.state(data.id,
+                            Content.ContentState.CONTENT_STATE_NORMAL)
+                            .subscribe(c -> {
+                                BeanUtils.copyProperties(c, data);
+                            });
+            }
+
+            dialog.close();
+        });
+
+        cancel.setOnMouseClicked(e -> {
+            dialog.close();
+        });
+
+        copy.setOnMouseClicked(e -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.putString(textArea.getText());
+            clipboard.setContent(clipboardContent);
+            dialog.close();
+        });
+
+        delete.setOnMouseClicked(e -> {
+            if(textArea.isEditable()) {
+                return;
+            }
+
+            switch (Content.ContentState.get(data.state)) {
+                case CONTENT_STATE_ARCHIVE:
+                    Disposable subscribe = clipboardViewModel.state(data.id,
+                            Content.ContentState.CONTENT_STATE_RECYCLE)
+                            .subscribe(c -> {
+                                BeanUtils.copyProperties(c, data);
+                            });
+                    break;
+                case CONTENT_STATE_RECYCLE:
+                    Disposable subscribe1 = clipboardViewModel.state(data.id,
+                            Content.ContentState.CONTENT_STATE_DELETE)
+                            .subscribe(c -> {
+                                BeanUtils.copyProperties(c, data);
+                            });
+                    break;
+                case CONTENT_STATE_NORMAL:
+                case CONTENT_STATE_DELETE:
+            }
+            dialog.close();
+        });
+
+        dialog.show();
     }
 
     private void toggleMenu() {

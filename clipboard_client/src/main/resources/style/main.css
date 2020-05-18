@@ -43,6 +43,10 @@
     -fx-background-color: -fx-control-inner-background;
 }
 
+.text-area {
+    -fx-background-color: -fx-control-inner-background;
+}
+
 .grid-view .scroll-bar:vertical {
     -fx-scale-x: 0;
     -fx-opacity: 0;

@@ -6,20 +6,24 @@
 <?import de.jensd.fx.glyphs.materialicons.MaterialIconView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<HBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
-   <JFXToolbar fx:id="container" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #fafafa;" HBox.hgrow="ALWAYS">
+<?import java.net.URL?>
+<HBox  prefWidth="400.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <stylesheets>
+      <URL value="@/style/main.css" />
+   </stylesheets>
+   <JFXToolbar fx:id="container" style="-fx-background-color: #fafafa;" HBox.hgrow="ALWAYS">
       <center>
          <VBox BorderPane.alignment="CENTER">
-            <Label fx:id="content" alignment="TOP_LEFT" layoutX="10.0" layoutY="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="34.0" wrapText="true" VBox.vgrow="ALWAYS">
-               <font>
-                  <Font size="14.0" />
-               </font>
-            </Label>
+            <TextArea fx:id="content" wrapText="true" VBox.vgrow="ALWAYS" focusTraversable="false">
+               <VBox.margin>
+                  <Insets bottom="10.0" />
+               </VBox.margin></TextArea>
          </VBox>
       </center>
       <padding>
@@ -35,7 +39,7 @@
                   <MaterialIconView glyphName="QUERY_BUILDER" />
                </graphic>
                <padding>
-                  <Insets right="20.0" />
+                  <Insets right="40.0" />
                </padding>
             </Label>
             <JFXButton fx:id="star">
@@ -43,39 +47,54 @@
                   <FontAwesomeIconView fx:id="starIcon" glyphName="STAR" />
                </graphic>
             </JFXButton>
-            <JFXButton fx:id="copy" layoutX="84.0" layoutY="10.0">
-               <graphic>
-                  <FontAwesomeIconView glyphName="COPY" />
-               </graphic>
-            </JFXButton>
             <JFXButton fx:id="archive" layoutX="84.0" layoutY="10.0">
                <graphic>
                   <FontAwesomeIconView glyphName="ARCHIVE" />
                </graphic>
             </JFXButton>
-            <JFXButton fx:id="restore">
+            <JFXButton fx:id="copy" layoutX="118.0" layoutY="10.0" >
                <graphic>
-                  <FontAwesomeIconView glyphName="UNDO" />
+                  <FontAwesomeIconView glyphName="COPY" />
                </graphic>
             </JFXButton>
-         </HBox>
-      </top>
-      <bottom>
-         <HBox BorderPane.alignment="CENTER">
-            <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
-               <graphic>
-                  <MaterialIconView glyphName="DEVICE" />
-               </graphic>
-            </Label>
-            <JFXButton fx:id="trash">
+            <JFXButton fx:id="delete" layoutX="230.0" layoutY="10.0">
                <graphic>
                   <FontAwesomeIconView glyphName="TRASH" />
                </graphic>
             </JFXButton>
+            <JFXButton fx:id="cancel">
+               <graphic>
+                  <FontAwesomeIconView glyphName="TIMES" />
+               </graphic>
+            </JFXButton>
+         </HBox>
+      </top>
+      <HBox.margin>
+         <Insets />
+      </HBox.margin>
+      <bottom>
+         <HBox BorderPane.alignment="CENTER">
+            <Label fx:id="device" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+               <graphic>
+                  <MaterialIconView fx:id="deviceIcon" />
+               </graphic>
+            </Label>
+            <JFXButton fx:id="edit" text="Edit">
+               <graphic>
+                  <FontAwesomeIconView glyphName="EDIT" />
+               </graphic>
+            </JFXButton>
+            <JFXButton fx:id="ok" layoutX="349.0" layoutY="10.0">
+               <graphic>
+                  <FontAwesomeIconView glyphName="CHECK"/>
+               </graphic>
+            </JFXButton>
+            <JFXButton fx:id="recover" visible="false" managed="false">
+               <graphic>
+                  <FontAwesomeIconView glyphName="UNDO"/>
+               </graphic>
+            </JFXButton>
          </HBox>
       </bottom>
-      <HBox.margin>
-         <Insets left="10" right="10" />
-      </HBox.margin>
    </JFXToolbar>
 </HBox>

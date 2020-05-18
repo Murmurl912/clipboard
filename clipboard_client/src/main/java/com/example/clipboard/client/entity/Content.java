@@ -26,7 +26,7 @@ public class Content {
     @Lob
     public String content;
     public Timestamp timestamp;
-    public Integer previous; // for example when a content is recycled previous state should be keep
+    public Boolean star;
     public Integer state;
     public String hash;
 
@@ -43,7 +43,6 @@ public class Content {
                    String device,
                    String content,
                    Timestamp timestamp,
-                   ContentState previous,
                    ContentState state,
                    String hash,
                    Timestamp create,
@@ -54,7 +53,6 @@ public class Content {
         this.device = device;
         this.content = content;
         this.timestamp = timestamp;
-        this.previous = previous.STATE;
         this.state = state.STATE;
         this.hash = hash;
         this.create = create;
@@ -109,14 +107,6 @@ public class Content {
         this.timestamp = timestamp;
     }
 
-    public Integer getPrevious() {
-        return previous;
-    }
-
-    public void setPrevious(Integer previous) {
-        this.previous = previous;
-    }
-
     public Integer getState() {
         return state;
     }
@@ -149,6 +139,14 @@ public class Content {
         this.update = update;
     }
 
+    public void setStar(Boolean star) {
+        this.star = star;
+    }
+
+    public Boolean getStar() {
+        return star;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -160,7 +158,6 @@ public class Content {
                 Objects.equals(device, content1.device) &&
                 Objects.equals(content, content1.content) &&
                 Objects.equals(timestamp, content1.timestamp) &&
-                Objects.equals(previous, content1.previous) &&
                 Objects.equals(state, content1.state) &&
                 Objects.equals(hash, content1.hash) &&
                 Objects.equals(create, content1.create) &&
@@ -169,7 +166,7 @@ public class Content {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, account, status, device, content, timestamp, previous, state, hash, create, update);
+        return Objects.hash(id, account, status, device, content, timestamp, state, hash, create, update);
     }
 
 
@@ -182,7 +179,6 @@ public class Content {
                 ", device='" + device + '\'' +
                 ", content='" + content + '\'' +
                 ", timestamp=" + timestamp +
-                ", previous=" + state +
                 ", state=" + state +
                 ", hash='" + hash + '\'' +
                 ", create=" + create +
@@ -202,8 +198,8 @@ public class Content {
             device = (new SystemInfo()).getOperatingSystem().getVersionInfo().getVersion();
         if(state == null)
             state = ContentState.CONTENT_STATE_NORMAL.STATE;
-        if(previous == null)
-            previous = state;
+        if(star == null)
+            star = false;
         if(timestamp == null)
             timestamp = new Timestamp(System.currentTimeMillis());
         if(create == null)
@@ -231,10 +227,9 @@ public class Content {
 
     public static enum ContentState {
         CONTENT_STATE_NORMAL(0),
-        CONTENT_STATE_STAR(1),
-        CONTENT_STATE_ARCHIVE(2),
-        CONTENT_STATE_RECYCLE(3),
-        CONTENT_STATE_DELETE(4);
+        CONTENT_STATE_ARCHIVE(1),
+        CONTENT_STATE_RECYCLE(2),
+        CONTENT_STATE_DELETE(3);
 
         public int STATE;
         ContentState(int state) {
@@ -243,10 +238,9 @@ public class Content {
 
         public static ContentState get(int state) {
             switch (state) {
-                case 1: return CONTENT_STATE_STAR;
-                case 2: return CONTENT_STATE_ARCHIVE;
-                case 3: return CONTENT_STATE_RECYCLE;
-                case 4: return CONTENT_STATE_DELETE;
+                case 1: return CONTENT_STATE_ARCHIVE;
+                case 2: return CONTENT_STATE_RECYCLE;
+                case 3: return CONTENT_STATE_DELETE;
                 default: return CONTENT_STATE_NORMAL;
             }
         }

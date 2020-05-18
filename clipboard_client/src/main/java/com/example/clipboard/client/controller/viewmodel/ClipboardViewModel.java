@@ -11,6 +11,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
@@ -28,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Component
 public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
+    private final Logger logger = LoggerFactory.getLogger(ClipboardViewModel.class);
 
     private final ObservableList<Content> clipboard = FXCollections.observableArrayList();
     private final AtomicBoolean clipboardRefreshing = new AtomicBoolean(false);
@@ -145,190 +148,52 @@ public class ClipboardViewModel implements ApplicationListener<ContentEvent> {
         });
     }
 
+    public Single<Content> star(String id, boolean star) {
+        return Single.fromCallable(()->{
+            return context.getBean(CachedClipboardService.class)
+                    .star(id, star);
+        });
+    }
+
+    public Single<Content> text(String id, String content) {
+        return Single.fromCallable(()->{
+            return context.getBean(CachedClipboardService.class)
+                    .text(id, content);
+        });
+    }
+
     @Override
     public void onApplicationEvent(ContentEvent contentEvent) {
         // handle content change
         // reflect to in memory cache
-        if(contentEvent instanceof ContentUpdateEvent) {
-            handle((ContentUpdateEvent) contentEvent);
-        }
-        if(contentEvent instanceof ContentDeleteEvent) {
-            handle((ContentDeleteEvent) contentEvent);
-        }
-        if(contentEvent instanceof ContentRecycleEvent) {
-            handle((ContentRecycleEvent) contentEvent);
-        }
-        if(contentEvent instanceof ContentArchiveEvent) {
-            handle((ContentArchiveEvent) contentEvent);
-        }
-        if(contentEvent instanceof ContentStarEvent) {
-            handle((ContentStarEvent) contentEvent);
-        }
-        if(contentEvent instanceof ContentCreateEvent) {
-            handle((ContentCreateEvent) contentEvent);
-        }
-        if(contentEvent instanceof ContentNormalEvent) {
-            handle((ContentNormalEvent) contentEvent);
-        }
-
+        remove(contentEvent.getBefore());
+        add(contentEvent.getNow());
     }
 
-    /**
-     * this implementation assume archived or recycled content
-     * will not be updated
-     * @param event event
-     */
-    private void handle(@NonNull ContentUpdateEvent event) {
-        switch (Content.ContentState.get(event.getBefore().state)) {
-            case CONTENT_STATE_NORMAL:
-                clipboard.remove(event.getBefore());
-                clipboard.add(0, event.getNow());
-                break;
-            case CONTENT_STATE_STAR:
-                clipboard.remove(event.getBefore());
-                clipboard.add(0, event.getNow());
-                star.remove(event.getBefore());
-                star.add(0, event.getNow());
-                break;
-            case CONTENT_STATE_ARCHIVE:
-            case CONTENT_STATE_RECYCLE:
-            case CONTENT_STATE_DELETE:
-            default: throw new IllegalStateException("Cannot update a deleted, archived, recycled content");
-        }
+    private void remove(@NonNull Content content) {
+        clipboard.remove(content);
+        star.remove(content);
+        trash.remove(content);
+        archive.remove(content);
     }
 
-    /**
-     * remove content
-     * @param event event
-     */
-    private void handle(@NonNull ContentDeleteEvent event) {
-        switch (Content.ContentState.get(event.getBefore().state)) {
+    private void add(@NonNull Content content) {
+        switch (Content.ContentState.get(content.state)) {
             case CONTENT_STATE_NORMAL:
-                clipboard.remove(event.getBefore());
-                break;
-            case CONTENT_STATE_STAR:
-                clipboard.remove(event.getBefore());
-                star.remove(event.getBefore());
+                clipboard.add(0, content);
+                if(content.star) {
+                    star.add(0, content);
+                }
                 break;
             case CONTENT_STATE_ARCHIVE:
-                archive.remove(event.getBefore());
-            case CONTENT_STATE_RECYCLE:
-                trash.remove(event.getBefore());
-                break;
-            case CONTENT_STATE_DELETE:
-            default: throw new IllegalStateException("Cannot delete a deleted content");
-
-        }
-    }
-
-    /**
-     *
-     * @param event event
-     */
-    private void handle(@NonNull ContentArchiveEvent event) {
-        switch (Content.ContentState.get(event.getBefore().state)) {
-            case CONTENT_STATE_NORMAL:
-                clipboard.remove(event.getBefore());
-                archive.add(event.getNow());
-                break;
-            case CONTENT_STATE_STAR:
-                clipboard.remove(event.getBefore());
-                star.remove(event.getBefore());
-                archive.add(event.getNow());
+                archive.add(0, content);
                 break;
             case CONTENT_STATE_RECYCLE:
-                trash.remove(event.getBefore());
-                archive.add(event.getNow());
+                trash.add(0, content);
                 break;
-            case CONTENT_STATE_ARCHIVE:
-            case CONTENT_STATE_DELETE:
-            default: throw new IllegalStateException("Cannot archive a deleted or an archived content");
-        }
-    }
-
-    private void handle(@NonNull ContentStarEvent event) {
-        switch (Content.ContentState.get(event.getBefore().state)) {
-            case CONTENT_STATE_NORMAL:
-                clipboard.remove(event.getBefore());
-                clipboard.add(0, event.getNow());
-                star.add(0, event.getNow());
-                break;
-            case CONTENT_STATE_ARCHIVE:
-                archive.remove(event.getBefore());
-                clipboard.add(event.getNow());
-                star.add(event.getNow());
-                break;
-            case CONTENT_STATE_RECYCLE:
-                trash.remove(event.getBefore());
-                clipboard.add(event.getNow());
-                star.add(event.getNow());
-                break;
-            case CONTENT_STATE_STAR:
-            case CONTENT_STATE_DELETE:
-            default: throw new IllegalStateException("Cannot star a stared or deleted content");
-        }
-    }
-
-    private void handle(@NonNull ContentRecycleEvent event) {
-        switch (Content.ContentState.get(event.getBefore().state)) {
-            case CONTENT_STATE_NORMAL:
-                clipboard.remove(event.getBefore());
-                trash.add(event.getNow());
-                break;
-            case CONTENT_STATE_STAR:
-                clipboard.remove(event.getBefore());
-                star.remove(event.getBefore());
-                trash.add(event.getNow());
-                break;
-            case CONTENT_STATE_ARCHIVE:
-                archive.remove(event.getBefore());
-                trash.add(event.getNow());
-                break;
-            case CONTENT_STATE_RECYCLE:
-            case CONTENT_STATE_DELETE:
-            default: throw new IllegalStateException("Cannot recycle a recycled or deleted content");
-        }
-    }
-
-
-    private void handle(@NonNull ContentCreateEvent event) {
-        switch (Content.ContentState.get(event.getNow().state)) {
-            case CONTENT_STATE_NORMAL:
-                clipboard.add(0, event.getNow());
-                break;
-            case CONTENT_STATE_STAR:
-                clipboard.add(0, event.getNow());
-                star.add(0, event.getNow());
-                break;
-            case CONTENT_STATE_ARCHIVE:
-                archive.add(0, event.getNow());
-                break;
-            case CONTENT_STATE_RECYCLE:
-                trash.add(0, event.getNow());
-                break;
-            case CONTENT_STATE_DELETE:
-            default: throw new IllegalStateException("Cannot create a deleted content");
-        }
-    }
-
-    private void handle(@NonNull ContentNormalEvent event) {
-        switch (Content.ContentState.get(event.getBefore().state)) {
-            case CONTENT_STATE_STAR:
-                star.remove(event.getBefore());
-                clipboard.remove(event.getBefore());
-                break;
-            case CONTENT_STATE_ARCHIVE:
-                archive.remove(event.getBefore());
-                break;
-            case CONTENT_STATE_RECYCLE:
-                trash.remove(event.getBefore());
-                break;
-            case CONTENT_STATE_NORMAL:
             case CONTENT_STATE_DELETE:
             default:
-                throw new IllegalStateException("Cannot normal a deleted or normal content");
         }
-        clipboard.add(0, event.getNow());
     }
 
 }

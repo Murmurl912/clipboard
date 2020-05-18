@@ -19,4 +19,5 @@ public interface CachedContentRepository extends JpaRepository<Content, String> 
 
     public Optional<Content> findContentByContentEqualsAndHashEquals(String content, String hash);
 
+    public List<Content> getContentsByStateEqualsAndStarEquals(Integer state, Boolean star);
 }

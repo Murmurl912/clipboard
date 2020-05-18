@@ -24,6 +24,7 @@ public class CardCell extends GridCell<Content> {
 
         }
     };
+
     private final Map<String, Node> holder = new HashMap<>();
     private ViewReadyCallback viewReadyCallback;
     private ViewUpdateCallback viewUpdateCallback;

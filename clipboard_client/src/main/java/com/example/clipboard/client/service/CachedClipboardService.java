@@ -62,6 +62,7 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
     public Content save(@NonNull Content content) {
         ensureRepositoryNotNull();
 
+        // create event
         // no id is supplied indicate that this content is new
         if(StringUtils.isEmpty(content.id)) {
 
@@ -78,7 +79,7 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             if(optionalContent.isEmpty()) {
                 content.setDefaultIfAbsent();
                 content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-                content.previous = content.state;
+                content.star = false;
                 content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
                 SystemInfo systemInfo = new SystemInfo();
                 content.device = systemInfo.getOperatingSystem().getVersionInfo().toString();
@@ -95,20 +96,8 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             content.timestamp = new Timestamp(System.currentTimeMillis());
             content.update = new Timestamp(System.currentTimeMillis());
 
-            // what is same text is archived recycled or star
-            switch (Content.ContentState.get(content.state)) {
-                case CONTENT_STATE_NORMAL:
-                case CONTENT_STATE_STAR:
-                    break;
-                case CONTENT_STATE_RECYCLE:
-                case CONTENT_STATE_ARCHIVE:
-                case CONTENT_STATE_DELETE:
-                    content.state = content.previous;
-                    if(content.state == null) {
-                        content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-                    }
-                    break;
-            }
+            // when content with same text is archived, recycled or deleted
+            content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
             content = repository.save(content);
             ContentUpdateEvent event = new ContentUpdateEvent(this, old, content);
             publisher.publishEvent(event);
@@ -116,8 +105,12 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         }
 
         // an id is supplied indicate content changed or content from cloud sync
+        // or from local cache
         Optional<Content> contentOptional = repository.findById(content.id);
-        if(contentOptional.isEmpty()) { // a new content supplied with id
+
+        // create event
+        if(contentOptional.isEmpty()) {
+            // a new content supplied with id
             // content may be the result of cloud synchronization
             if(StringUtils.isEmpty(content.content)) {
                 throw new RuntimeException("Content is empty: " + content);
@@ -129,11 +122,13 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             // check state
             if(content.state == null) {
                 content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-            }
-            if(content.previous == null) {
-                content.previous = content.state;
+                content.update = new Timestamp(System.currentTimeMillis());
             }
 
+            if(content.star == null) {
+                content.star = false;
+                content.update = new Timestamp(System.currentTimeMillis());
+            }
             content.timestamp = new Timestamp(System.currentTimeMillis());
             Content saved = repository.save(content);
             ContentCreateEvent contentCreateEvent = new ContentCreateEvent(this, saved, saved);
@@ -141,71 +136,55 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             return content;
         }
 
+        // update event
         // content exists in local cache
         Content old = contentOptional.get();
         Content destination = new Content();
         BeanUtils.copyProperties(old, destination);
 
-        boolean contentChangeFlag = false;
-        boolean stateChangeFlag = false;
+        // star flag is updated
 
-        if(content.content == null
-                || content.content.equals(old.content)) {
-            // no change from content
-            contentChangeFlag = true;
-        }
-
-        if(content.state == null || content.state.equals(old.state)) {
-            // no change from state
-            stateChangeFlag = true;
-        }
 
         PojoCopyHelper.merge(content, destination);
-        destination.update = new Timestamp(System.currentTimeMillis());
-
-        if(contentChangeFlag) {
+        // content is update
+        if(content.content != null && !content.content.equals(old.content)) {
+            destination.update = new Timestamp(System.currentTimeMillis());
             destination.timestamp = new Timestamp(System.currentTimeMillis());
-        }
-
-        if(stateChangeFlag) {
-            destination.timestamp = new Timestamp(System.currentTimeMillis());
-            destination.previous = old.state;
-        }
-
-        if(destination.state == null) {
-            destination.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-        }
-        if(destination.previous == null) {
-            destination.previous = destination.state;
-        }
-
-        destination = repository.save(destination);
-        if(contentChangeFlag) {
+            destination.hash = hash(destination.content);
+            destination = repository.save(destination);
             ContentUpdateEvent contentUpdateEvent = new ContentUpdateEvent(this, old, destination);
             publisher.publishEvent(contentUpdateEvent);
-        } else if(stateChangeFlag) {
-            ContentEvent event = null;
-            switch (Content.ContentState.get(destination.state)) {
-                case CONTENT_STATE_NORMAL:
-                    event = new ContentNormalEvent(this, old, destination);
-                    break;
-                case CONTENT_STATE_ARCHIVE:
-                    event = new ContentArchiveEvent(this, old, destination);
-                    break;
-                case CONTENT_STATE_RECYCLE:
-                    event = new ContentRecycleEvent(this, old, destination);
-                    break;
-                case CONTENT_STATE_STAR:
-                    event = new ContentUpdateEvent(this, old, destination);
-                    break;
-                case CONTENT_STATE_DELETE:
-                    event = new ContentDeleteEvent(this, old, destination);
-                    break;
-                default:
+        } else if(content.star != null && !content.star.equals(old.star)) {
+            // star is update
+            if(destination.star == null) {
+                destination.star = false;
             }
-            publisher.publishEvent(event);
+            destination.update = new Timestamp(System.currentTimeMillis());
+            destination.timestamp = new Timestamp(System.currentTimeMillis());
+            destination = repository.save(destination);
+            ContentStarEvent contentStarEvent = new ContentStarEvent(this, old, destination);
+        } else {
+            destination = repository.save(destination);
         }
+
         return destination;
+    }
+
+    public Content star(String id, boolean star) {
+        ensureDigestNotNull();
+        Optional<Content> contentOptional = repository.findById(id);
+        if(contentOptional.isEmpty()) {
+            throw new RuntimeException("Content not found by id: " + id);
+        }
+        Content content = contentOptional.get();
+        Content old = new Content();
+        BeanUtils.copyProperties(content, old);
+        content.update = new Timestamp(System.currentTimeMillis());
+        content.star = star;
+        content = repository.save(content);
+        ContentStarEvent starEvent = new ContentStarEvent(this, old, content);
+        publisher.publishEvent(starEvent);
+        return content;
     }
 
     public Content state(String id, Content.ContentState state) {
@@ -220,29 +199,25 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         if(isStateChangeValid(Content.ContentState.get(content.state), state)) {
 
             content.update = new Timestamp(System.currentTimeMillis());
-            content.previous = old.state;
             content.state = state.STATE;
-            Content saved = repository.save(content);
+            content = repository.save(content);
             ContentEvent event = null;
             switch (state) {
                 case CONTENT_STATE_NORMAL:
-                    event = new ContentNormalEvent(this, old, saved);
-                    break;
-                case CONTENT_STATE_STAR:
-                    event = new ContentStarEvent(this, old, saved);
+                    event = new ContentNormalEvent(this, old, content);
                     break;
                 case CONTENT_STATE_ARCHIVE:
-                    event = new ContentArchiveEvent(this, old, saved);
+                    event = new ContentArchiveEvent(this, old, content);
                     break;
                 case CONTENT_STATE_RECYCLE:
-                    event = new ContentRecycleEvent(this, old, saved);
+                    event = new ContentRecycleEvent(this, old, content);
                     break;
                 case CONTENT_STATE_DELETE:
-                    event = new ContentDeleteEvent(this, old, saved);
+                    event = new ContentDeleteEvent(this, old, content);
                     break;
             }
             publisher.publishEvent(event);
-            return saved;
+            return content;
         } else {
             throw new RuntimeException("Content State Invalid: " + content.state + " -> " + state);
         }
@@ -329,13 +304,12 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
 
     public List<Content> getClipboard() {
         ensureRepositoryNotNull();
-        return repository.getContentsByStateIn(Arrays.asList(Content.ContentState.CONTENT_STATE_NORMAL.STATE,
-                Content.ContentState.CONTENT_STATE_STAR.STATE));
+        return repository.getContentsByStateEquals(Content.ContentState.CONTENT_STATE_NORMAL.STATE);
     }
 
     public List<Content> getStar() {
         ensureRepositoryNotNull();
-        return repository.getContentsByStateEquals(Content.ContentState.CONTENT_STATE_STAR.STATE);
+        return repository.getContentsByStateEqualsAndStarEquals(Content.ContentState.CONTENT_STATE_NORMAL.STATE, true);
     }
 
     public List<Content> getArchive() {
@@ -392,29 +366,16 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             case CONTENT_STATE_NORMAL:
                 switch (now) {
                     case CONTENT_STATE_ARCHIVE:
-                    case CONTENT_STATE_STAR:
                     case CONTENT_STATE_RECYCLE:
                     case CONTENT_STATE_DELETE:
                         return true;
                     case CONTENT_STATE_NORMAL:
-                    default:
-                        return false;
-                }
-            case CONTENT_STATE_STAR:
-                switch (now) {
-                    case CONTENT_STATE_NORMAL:
-                    case CONTENT_STATE_ARCHIVE:
-                    case CONTENT_STATE_RECYCLE:
-                    case CONTENT_STATE_DELETE:
-                        return true;
-                    case CONTENT_STATE_STAR:
                     default:
                         return false;
                 }
             case CONTENT_STATE_ARCHIVE:
                 switch (now) {
                     case CONTENT_STATE_NORMAL:
-                    case CONTENT_STATE_STAR:
                     case CONTENT_STATE_RECYCLE:
                     case CONTENT_STATE_DELETE:
                         return true;
@@ -425,7 +386,6 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
             case CONTENT_STATE_RECYCLE:
                 switch (now) {
                     case CONTENT_STATE_NORMAL:
-                    case CONTENT_STATE_STAR:
                     case CONTENT_STATE_ARCHIVE:
                     case CONTENT_STATE_DELETE:
                         return true;
