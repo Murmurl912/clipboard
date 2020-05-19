@@ -4,14 +4,9 @@ import com.clipboard.clipboard_store.event.ClipboardEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.annotation.SessionScope;
 import reactor.core.publisher.FluxSink;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.function.Consumer;
 
 //@Scope("prototype")

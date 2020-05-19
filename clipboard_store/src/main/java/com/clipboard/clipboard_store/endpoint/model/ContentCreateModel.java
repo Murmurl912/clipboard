@@ -4,7 +4,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.sql.Timestamp;
+import java.util.Date;
 
 public class ContentCreateModel {
 
@@ -14,21 +14,21 @@ public class ContentCreateModel {
     @NotBlank
     public String content;
     @NotNull
-    public Timestamp contentVersion;
+    public Date contentVersion;
     @NotNull
     public Boolean star;
     @NotNull
-    public Timestamp starVersion;
+    public Date starVersion;
     @NotNull
     @Max(1)
     @Min(0)
     public Integer state;
     @NotNull
-    public Timestamp stateVersion;
+    public Date stateVersion;
 
     @NotNull
-    public Timestamp create;
+    public Date create;
     @NotNull
-    public Timestamp update;
+    public Date update;
 
 }

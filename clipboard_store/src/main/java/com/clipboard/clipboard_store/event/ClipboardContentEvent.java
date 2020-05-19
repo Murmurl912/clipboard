@@ -1,19 +1,17 @@
 package com.clipboard.clipboard_store.event;
 
-import org.springframework.context.ApplicationEvent;
-
-import java.sql.Timestamp;
+import java.util.Date;
 
 public class ClipboardContentEvent extends ClipboardEvent {
 
     private final String id;
     private final Integer type;
-    private final Timestamp version;
+    private final Date version;
 
     public ClipboardContentEvent(String id,
                                  String account,
                                  ClipboardContentEventType type,
-                                 Timestamp version) {
+                                 Date version) {
         super(account);
         this.id = id;
         this.type = type.EVENT;
@@ -28,7 +26,7 @@ public class ClipboardContentEvent extends ClipboardEvent {
         return type;
     }
 
-    public Timestamp getVersion() {
+    public Date getVersion() {
         return version;
     }
 

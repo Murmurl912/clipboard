@@ -2,23 +2,22 @@ package com.clipboard.clipboard_store.service;
 
 import com.clipboard.clipboard_store.event.ClipboardContentEvent;
 import com.clipboard.clipboard_store.repository.ContentRepository;
-import com.mongodb.internal.connection.Time;
+import com.clipboard.clipboard_store.repository.entity.ClipboardContent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
-import com.clipboard.clipboard_store.repository.entity.ClipboardContent;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.sql.Timestamp;
+import java.util.Date;
 
-import static com.clipboard.clipboard_store.repository.entity.ClipboardContent.ContentState;
 import static com.clipboard.clipboard_store.event.ClipboardContentEvent.ClipboardContentEventType.*;
+import static com.clipboard.clipboard_store.repository.entity.ClipboardContent.ContentState;
 
 @Service
 public class ClipboardService {
@@ -34,6 +33,20 @@ public class ClipboardService {
         this.repository = repository;
         this.digest = digest;
         this.publisher = publisher;
+    }
+
+    public Flux<ClipboardContent> versions(String account) {
+        return repository
+                .findAllByAccountEquals(account);
+    }
+
+    public Flux<ClipboardContent> versions(String account, Boolean star) {
+        return repository
+                .findAllByAccountEqualsAndStar(account, star);
+    }
+
+    public Flux<ClipboardContent> version(String content) {
+        return repository.findFirstByIdEquals(content);
     }
 
     public Flux<ClipboardContent> gets(String account) {
@@ -75,11 +88,11 @@ public class ClipboardService {
 
     public Mono<ClipboardContent> star(String id,
                                        boolean star,
-                                       Timestamp timestamp) {
+                                       Date Date) {
         return repository.findById(id)
                 .switchIfEmpty(Mono.error(new RuntimeException()))
                 .handle((content, sink) -> {
-                    if(content.starVersion.after(timestamp)) {
+                    if(content.starVersion.after(Date)) {
                         sink.error(new RuntimeException());
                     } else {
                         sink.next(content);
@@ -89,9 +102,9 @@ public class ClipboardService {
                 .flatMap(content -> {
                     if(!content.star.equals(star)) {
                         content.star = star;
-                        content.starVersion = timestamp;
+                        content.starVersion = Date;
                         // overall version changed
-                        content.update = new Timestamp(System.currentTimeMillis());
+                        content.update = new Date(System.currentTimeMillis());
                         return repository.save(content).map(c -> {
                             ClipboardContentEvent event =
                                     new ClipboardContentEvent(
@@ -110,11 +123,11 @@ public class ClipboardService {
 
     public Mono<ClipboardContent> state(String id,
                                         ContentState state,
-                                        Timestamp timestamp) {
+                                        Date Date) {
         return repository.findById(id)
                 .switchIfEmpty(Mono.error(new RuntimeException()))
                 .handle((content, sink) -> {
-                    if(content.stateVersion.after(timestamp)) {
+                    if(content.stateVersion.after(Date)) {
                         sink.error(new RuntimeException());
                     } else {
                         sink.next(content);
@@ -134,9 +147,9 @@ public class ClipboardService {
                         return Mono.just(content);
                     }
                     content.state = state.STATE;
-                    content.stateVersion = new Timestamp(System.currentTimeMillis());
+                    content.stateVersion = new Date(System.currentTimeMillis());
                     // overall version changed
-                    content.update = new Timestamp(System.currentTimeMillis());
+                    content.update = new Date(System.currentTimeMillis());
                     return repository.save(content).map(c -> {
                         ClipboardContentEvent event =
                                 new ClipboardContentEvent(
@@ -152,11 +165,11 @@ public class ClipboardService {
 
     public Mono<ClipboardContent> content(String id,
                                           String text,
-                                          Timestamp timestamp) {
+                                          Date Date) {
         return repository.findById(id)
                 .switchIfEmpty(Mono.error(new RuntimeException()))
                 .handle((content, sink) -> {
-                    if(content.contentVersion.after(timestamp)) {
+                    if(content.contentVersion.after(Date)) {
                         sink.error(new RuntimeException());
                     } else {
                         sink.next(content);
@@ -169,8 +182,8 @@ public class ClipboardService {
                     }
                     content.content = text;
                     // overall version changed
-                    content.update = new Timestamp(System.currentTimeMillis());
-                    content.contentVersion = new Timestamp(System.currentTimeMillis());
+                    content.update = new Date(System.currentTimeMillis());
+                    content.contentVersion = new Date(System.currentTimeMillis());
 
 
                     return repository.save(content).map(c -> {
@@ -189,7 +202,7 @@ public class ClipboardService {
     public Mono<ClipboardContent> create(String account, ClipboardContent data) {
         return Mono.fromCallable(()-> hash(data.content.getBytes(StandardCharsets.UTF_8)))
                 .subscribeOn(Schedulers.boundedElastic())
-                .flatMap((repository::findFirstByHashEquals))
+                .flatMap(hash -> repository.findFirstByHashEqualsAndAccountEquals(hash, account))
                 .switchIfEmpty(Mono.just(new ClipboardContent()))
                 .flatMap(content -> {
                    if(StringUtils.isEmpty(content.id)) {
@@ -200,10 +213,10 @@ public class ClipboardService {
                    } else {
                        // exist in current database
                        content.state = ContentState.CONTENT_STATE_NORMAL.STATE;
-                       content.stateVersion = new Timestamp(System.currentTimeMillis());
+                       content.stateVersion = new Date(System.currentTimeMillis());
                        content.contentVersion = data.contentVersion;
                        // overall version changed
-                       content.update = new Timestamp(System.currentTimeMillis());
+                       content.update = new Date(System.currentTimeMillis());
                        return repository.save(data);
                    }
                 })
