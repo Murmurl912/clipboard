@@ -91,12 +91,12 @@ public class CardCell extends GridCell<Content> {
         viewUpdateCallback.onUpdate(this, content, empty);
     }
 
-    public static interface ViewReadyCallback {
-        public void onReady(CardCell cardCell);
+    public interface ViewReadyCallback {
+        void onReady(CardCell cardCell);
     }
 
-    public static interface ViewUpdateCallback {
-        public void onUpdate(CardCell cell, Content content, boolean empty);
+    public interface ViewUpdateCallback {
+        void onUpdate(CardCell cell, Content content, boolean empty);
     }
 
 }

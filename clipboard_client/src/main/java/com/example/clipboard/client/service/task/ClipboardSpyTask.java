@@ -2,7 +2,7 @@ package com.example.clipboard.client.service.task;
 
 import com.example.clipboard.client.event.ClipboardEvent;
 import com.example.clipboard.client.event.clipboard.ClipboardUpdateEvent;
-import com.example.clipboard.client.lifecycle.ApplicationStartEvent;
+import com.example.clipboard.client.event.AppStartEvent;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Lazy(false)
 @Component
-public class ClipboardSpyTask implements ApplicationListener<ApplicationStartEvent> {
+public class ClipboardSpyTask implements ApplicationListener<AppStartEvent> {
 
     // todo replace with a queue
     private final AtomicReference<String> before = new AtomicReference<>(null);
@@ -29,7 +29,7 @@ public class ClipboardSpyTask implements ApplicationListener<ApplicationStartEve
     }
 
     @Override
-    public void onApplicationEvent(ApplicationStartEvent applicationStartEvent) {
+    public void onApplicationEvent(AppStartEvent applicationStartEvent) {
         // todo do something on application start
     }
 
@@ -51,7 +51,6 @@ public class ClipboardSpyTask implements ApplicationListener<ApplicationStartEve
                     }
                 }
             }
-            ;
         });
     }
 }

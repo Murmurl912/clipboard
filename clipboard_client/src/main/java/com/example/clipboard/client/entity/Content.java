@@ -1,12 +1,13 @@
 package com.example.clipboard.client.entity;
 
-import oshi.SystemInfo;
-
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.Table;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * STATE OF CONTENT
@@ -21,16 +22,20 @@ public class Content {
     public String account;
     public Integer status;
 
-    public String device;
-
     @Lob
     public String content;
-    public Boolean star;
-    public Integer state;
-    public String hash;
+    public Date contentVersion;
 
-    public Timestamp create;
-    public Timestamp update;
+    public Boolean star;
+    public Date starVersion;
+
+    public Integer state;
+    public Date stateVersion;
+
+    public byte[] hash;
+
+    public Date create;
+    public Date update;
 
     public Content() {
 
@@ -39,22 +44,26 @@ public class Content {
     public Content(String id,
                    String account,
                    ContentStatus status,
-                   String device,
                    String content,
-                   Timestamp timestamp,
+                   Date contentVersion,
                    ContentState state,
-                   String hash,
-                   Timestamp create,
-                   Timestamp update) {
+                   Date stateVersion,
+                   boolean star,
+                   Date starVersion,
+                   byte[] hash,
+                   Date create,
+                   Date update) {
         this.id = id;
         this.account = account;
         this.status = status.STATUS;
-        this.device = device;
         this.content = content;
         this.state = state.STATE;
         this.hash = hash;
         this.create = create;
         this.update = update;
+        this.contentVersion = contentVersion;
+        this.starVersion = starVersion;
+        this.stateVersion = stateVersion;
     }
 
     public String getId() {
@@ -81,13 +90,6 @@ public class Content {
         this.status = status;
     }
 
-    public String getDevice() {
-        return device;
-    }
-
-    public void setDevice(String device) {
-        this.device = device;
-    }
 
     public String getContent() {
         return content;
@@ -105,15 +107,15 @@ public class Content {
         this.state = state;
     }
 
-    public String getHash() {
+    public byte[] getHash() {
         return hash;
     }
 
-    public void setHash(String hash) {
+    public void setHash(byte[] hash) {
         this.hash = hash;
     }
 
-    public Timestamp getCreate() {
+    public Date getCreate() {
         return create;
     }
 
@@ -121,7 +123,7 @@ public class Content {
         this.create = create;
     }
 
-    public Timestamp getUpdate() {
+    public Date getUpdate() {
         return update;
     }
 
@@ -129,12 +131,12 @@ public class Content {
         this.update = update;
     }
 
-    public void setStar(Boolean star) {
-        this.star = star;
-    }
-
     public Boolean getStar() {
         return star;
+    }
+
+    public void setStar(Boolean star) {
+        this.star = star;
     }
 
     @Override
@@ -145,17 +147,16 @@ public class Content {
         return Objects.equals(id, content1.id) &&
                 Objects.equals(account, content1.account) &&
                 Objects.equals(status, content1.status) &&
-                Objects.equals(device, content1.device) &&
                 Objects.equals(content, content1.content) &&
                 Objects.equals(state, content1.state) &&
-                Objects.equals(hash, content1.hash) &&
+                Arrays.equals(hash, content1.hash) &&
                 Objects.equals(create, content1.create) &&
                 Objects.equals(update, content1.update);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, account, status, device, content, state, hash, create, update);
+        return Objects.hash(id, account, status, content, state, hash, create, update);
     }
 
 
@@ -165,36 +166,15 @@ public class Content {
                 "id='" + id + '\'' +
                 ", account='" + account + '\'' +
                 ", status=" + status +
-                ", device='" + device + '\'' +
                 ", content='" + content + '\'' +
                 ", state=" + state +
-                ", hash='" + hash + '\'' +
+                ", hash='" + Arrays.toString(hash) + '\'' +
                 ", create=" + create +
                 ", update=" + update +
                 '}';
     }
 
-
-    public void setDefaultIfAbsent() {
-        if(id == null)
-            id = UUID.randomUUID().toString();
-        if(account == null)
-            account = "local";
-        if(status == null)
-            status = ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
-        if(device == null)
-            device = (new SystemInfo()).getOperatingSystem().getVersionInfo().getVersion();
-        if(state == null)
-            state = ContentState.CONTENT_STATE_NORMAL.STATE;
-        if(star == null)
-            star = false;
-        if(create == null)
-            create = new Timestamp(System.currentTimeMillis());
-        if(update == null)
-            update = new Timestamp(System.currentTimeMillis());
-    }
-
-    public static enum ContentStatus {
+    public enum ContentStatus {
         CONTENT_STATUS_LOCAL(0),
         CONTENT_STATUS_CLOUD(1);
         public int STATUS;
@@ -211,24 +191,21 @@ public class Content {
         }
     }
 
-    public static enum ContentState {
+    public enum ContentState {
         CONTENT_STATE_NORMAL(0),
-        CONTENT_STATE_ARCHIVE(1),
-        CONTENT_STATE_RECYCLE(2),
-        CONTENT_STATE_DELETE(3);
+        CONTENT_STATE_DELETE(1);
 
         public int STATE;
+
         ContentState(int state) {
             STATE = state;
         }
 
         public static ContentState get(int state) {
-            switch (state) {
-                case 1: return CONTENT_STATE_ARCHIVE;
-                case 2: return CONTENT_STATE_RECYCLE;
-                case 3: return CONTENT_STATE_DELETE;
-                default: return CONTENT_STATE_NORMAL;
+            if (state == 1) {
+                return CONTENT_STATE_DELETE;
             }
+            return CONTENT_STATE_NORMAL;
         }
     }
 

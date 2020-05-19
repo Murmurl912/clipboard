@@ -1,5 +1,6 @@
 package com.example.clipboard.client.lifecycle;
 
+import com.example.clipboard.client.event.AppStartEvent;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -8,6 +9,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -21,8 +23,12 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
     @Value("classpath:image/icon.png")
     private Resource icon;
 
-    public StageInitializer(ApplicationContext context) {
+    private final ApplicationEventPublisher publisher;
+
+    public StageInitializer(ApplicationContext context,
+                            ApplicationEventPublisher publisher) {
         this.context = context;
+        this.publisher = publisher;
     }
 
     @Override
@@ -44,6 +50,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
             stage.setScene(new Scene(loader.load()));
 
             stage.show();
+            publisher.publishEvent(new AppStartEvent(this));
         } catch (Exception e) {
             // ToDo: error handling
             throw new RuntimeException(e);
@@ -51,7 +58,4 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
     }
 
 
-    private boolean shouldShowLogin() {
-        return true;
-    }
 }

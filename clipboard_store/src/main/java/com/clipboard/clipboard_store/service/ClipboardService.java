@@ -180,6 +180,8 @@ public class ClipboardService {
                     if(content.content.equals(text)) {
                         return Mono.just(content);
                     }
+
+                    // todo handle changed text conflicts
                     content.content = text;
                     // overall version changed
                     content.update = new Date(System.currentTimeMillis());
@@ -213,6 +215,7 @@ public class ClipboardService {
                    } else {
                        // exist in current database
                        content.state = ContentState.CONTENT_STATE_NORMAL.STATE;
+                       content.stateVersion = new Date(System.currentTimeMillis());
                        content.stateVersion = new Date(System.currentTimeMillis());
                        content.contentVersion = data.contentVersion;
                        // overall version changed

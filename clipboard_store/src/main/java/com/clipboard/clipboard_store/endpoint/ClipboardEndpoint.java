@@ -54,7 +54,8 @@ public class ClipboardEndpoint {
     }
 
     @GetMapping("/clipboard/account/{account}/content/{content}")
-    public Mono<ClipboardContent> get(@PathVariable String account, @PathVariable String content) {
+    public Mono<ClipboardContent> get(@PathVariable String account,
+                                      @PathVariable String content) {
         return service.get(content);
     }
 

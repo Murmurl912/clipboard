@@ -17,7 +17,7 @@ public class Record {
     public Timestamp timestamp;
     public Boolean processing;
 
-    public static enum RecordType {
+    public enum RecordType {
         RECORD_TYPE_CONTENT_CREATE(0),
         RECORD_TYPE_STATE_CHANGE(1),
         RECORD_TYPE_CONTENT_CHANGE(2),

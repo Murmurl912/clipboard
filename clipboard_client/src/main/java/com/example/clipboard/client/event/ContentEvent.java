@@ -3,7 +3,7 @@ package com.example.clipboard.client.event;
 import com.example.clipboard.client.entity.Content;
 import org.springframework.context.ApplicationEvent;
 
-public class ContentEvent extends ApplicationEvent {
+public class ContentEvent extends AppEvent {
 
     private final Content before;
     private final Content now;

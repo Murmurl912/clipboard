@@ -1,13 +1,13 @@
 package com.example.clipboard.client.service;
 
-import com.example.clipboard.client.entity.Account;
 import com.example.clipboard.client.entity.Content;
-import com.example.clipboard.client.event.ClipboardEvent;
+import com.example.clipboard.client.event.ContentEvent;
 import com.example.clipboard.client.event.clipboard.ClipboardClearEvent;
 import com.example.clipboard.client.event.clipboard.ClipboardUpdateEvent;
-import com.example.clipboard.client.event.content.*;
-import com.example.clipboard.client.event.ContentEvent;
-import com.example.clipboard.client.helper.PojoCopyHelper;
+import com.example.clipboard.client.event.content.ContentCreateEvent;
+import com.example.clipboard.client.event.content.ContentDeleteEvent;
+import com.example.clipboard.client.event.content.ContentStarEvent;
+import com.example.clipboard.client.event.content.ContentUpdateEvent;
 import com.example.clipboard.client.lifecycle.ApplicationInfo;
 import com.example.clipboard.client.repository.CachedContentRepository;
 import org.springframework.beans.BeanUtils;
@@ -20,14 +20,14 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Sort;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
-import oshi.SystemInfo;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.sql.Timestamp;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 //todo implement pageable
 
@@ -52,133 +52,56 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         this.publisher = publisher;
     }
 
-    /**
-     * save content to local content cache
-     * if id supplied will update
-     * if id not supplied will insert
-     * @param content content to be saved
-     * @return saved content
-     */
-    public Content save(@NonNull Content content) {
-        ensureRepositoryNotNull();
-
-        // create event
-        // no id is supplied indicate that this content is new
-        if(StringUtils.isEmpty(content.id)) {
-
-            // content id is empty and content is empty
-            if(StringUtils.isEmpty(content.content)) {
-                throw new RuntimeException("Content cannot be empty: " + content);
-            }
-
-            content.id = UUID.randomUUID().toString();
-            content.hash = hash(content.content);
-            Optional<Content> optionalContent = repository.
-                    findContentByContentEqualsAndHashEquals(content.content, content.hash);
-
-            if(optionalContent.isEmpty()) {
-                content.setDefaultIfAbsent();
-                content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-                content.star = false;
-                content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
-                SystemInfo systemInfo = new SystemInfo();
-                content.update = new Timestamp(System.currentTimeMillis());
-                content.device = systemInfo.getOperatingSystem().getVersionInfo().toString();
-                content.setDefaultIfAbsent();
-                content = repository.save(content);
-                ContentCreateEvent event = new ContentCreateEvent(this, content, content);
-                publisher.publishEvent(event);
-                return content;
-            }
-
-            content = optionalContent.get();
-            Content old = new Content();
-            BeanUtils.copyProperties(content, old);
-            content.update = new Timestamp(System.currentTimeMillis());
-
-            // when content with same text is archived, recycled or deleted
-            content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-            content = repository.save(content);
-            ContentUpdateEvent event = new ContentUpdateEvent(this, old, content);
-            publisher.publishEvent(event);
-            return content;
+    public Content create(String text) {
+        if (StringUtils.isEmpty(text)) {
+            throw new RuntimeException("Content cannot be empty");
         }
-
-        // an id is supplied indicate content changed or content from cloud sync
-        // or from local cache
-        Optional<Content> contentOptional = repository.findById(content.id);
-
-        // create event
-        if(contentOptional.isEmpty()) {
-            // a new content supplied with id
-            // content may be the result of cloud synchronization
-            if(StringUtils.isEmpty(content.content)) {
-                throw new RuntimeException("Content is empty: " + content);
-            }
-
-            if(StringUtils.isEmpty(content.hash)) {
-                content.hash = hash(content.content);
-            }
-
-            // check state
-            if(content.state == null) {
-                content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-                content.update = new Timestamp(System.currentTimeMillis());
-            }
-
-            if(content.star == null) {
-                content.star = false;
-                content.update = new Timestamp(System.currentTimeMillis());
-            }
-            content.setDefaultIfAbsent();
+        byte[] hash = hash(text);
+        Optional<Content> contentOptional = repository.findContentByHashEquals(hash);
+        if (contentOptional.isEmpty()) {
+            Content content = new Content();
+            content.id = UUID.randomUUID().toString();
+            content.account = "local";
+            content.content = text;
+            content.contentVersion = new Date(System.currentTimeMillis());
+            content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
+            content.stateVersion = new Date(System.currentTimeMillis());
+            content.star = false;
+            content.starVersion = new Date(System.currentTimeMillis());
+            content.hash = hash;
+            content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
+            content.create = new Date(System.currentTimeMillis());
+            content.update = new Date(System.currentTimeMillis());
             content = repository.save(content);
             ContentCreateEvent contentCreateEvent = new ContentCreateEvent(this, content, content);
             publisher.publishEvent(contentCreateEvent);
             return content;
-        }
-
-        // update event
-        // content exists in local cache
-        Content old = contentOptional.get();
-        Content destination = new Content();
-        BeanUtils.copyProperties(old, destination);
-
-
-        PojoCopyHelper.merge(content, destination);
-        // content is update
-        if(content.content != null && !content.content.equals(old.content)) {
-            destination.update = new Timestamp(System.currentTimeMillis());
-            destination.hash = hash(destination.content);
-            destination = repository.save(destination);
-            destination.setDefaultIfAbsent();
-            ContentUpdateEvent contentUpdateEvent = new ContentUpdateEvent(this, old, destination);
-            publisher.publishEvent(contentUpdateEvent);
-        } else if(content.star != null && !content.star.equals(old.star)) {
-            // star is update
-            if(destination.star == null) {
-                destination.star = false;
-            }
-            destination.setDefaultIfAbsent();
-            destination.update = new Timestamp(System.currentTimeMillis());
-            destination = repository.save(destination);
-            ContentStarEvent contentStarEvent = new ContentStarEvent(this, old, destination);
         } else {
-            destination = repository.save(destination);
+            Content original = contentOptional.get();
+            original.starVersion = new Date(System.currentTimeMillis());
+            original.update = new Date(System.currentTimeMillis());
+            original.contentVersion = new Date(System.currentTimeMillis());
+            original.stateVersion = new Date(System.currentTimeMillis());
+            ContentCreateEvent contentCreateEvent = new ContentCreateEvent(this, original, original);
+            publisher.publishEvent(contentCreateEvent);
+            return original;
         }
+    }
 
-        return destination;
+    protected Content cache(Content content) {
+        return repository.save(content);
     }
 
     public Content star(String id, boolean star) {
         ensureDigestNotNull();
         Optional<Content> contentOptional = repository.findById(id);
-        if(contentOptional.isEmpty()) {
+        if (contentOptional.isEmpty()) {
             throw new RuntimeException("Content not found by id: " + id);
         }
         Content content = contentOptional.get();
         Content old = new Content();
         BeanUtils.copyProperties(content, old);
-        content.update = new Timestamp(System.currentTimeMillis());
+        content.update = new Date(System.currentTimeMillis());
         content.star = star;
         content = repository.save(content);
         ContentStarEvent starEvent = new ContentStarEvent(this, old, content);
@@ -189,53 +112,42 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
     public Content state(String id, Content.ContentState state) {
         ensureRepositoryNotNull();
         Optional<Content> contentOptional = repository.findById(id);
-        if(contentOptional.isEmpty()) {
+        if (contentOptional.isEmpty()) {
             throw new RuntimeException("Content not found by id: " + id);
         }
         Content content = contentOptional.get();
         Content old = new Content();
         BeanUtils.copyProperties(content, old);
-        if(isStateChangeValid(Content.ContentState.get(content.state), state)) {
 
-            content.update = new Timestamp(System.currentTimeMillis());
+        if (old.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
+            throw new RuntimeException("Content is deleted: " + content);
+        }
+
+        if (old.state == state.STATE) {
+            return old;
+        } else {
             content.state = state.STATE;
             content = repository.save(content);
-            ContentEvent event = null;
-            switch (state) {
-                case CONTENT_STATE_NORMAL:
-                    event = new ContentNormalEvent(this, old, content);
-                    break;
-                case CONTENT_STATE_ARCHIVE:
-                    event = new ContentArchiveEvent(this, old, content);
-                    break;
-                case CONTENT_STATE_RECYCLE:
-                    event = new ContentRecycleEvent(this, old, content);
-                    break;
-                case CONTENT_STATE_DELETE:
-                    event = new ContentDeleteEvent(this, old, content);
-                    break;
-            }
+            ContentDeleteEvent event = new ContentDeleteEvent(this, old, content);
             publisher.publishEvent(event);
             return content;
-        } else {
-            throw new RuntimeException("Content State Invalid: " + content.state + " -> " + state);
         }
     }
 
     public Content text(String id, String text) {
         ensureRepositoryNotNull();
-        if(StringUtils.isEmpty(text)) {
+        if (StringUtils.isEmpty(text)) {
             throw new RuntimeException("Content cannot be empty!");
         }
         Optional<Content> contentOptional = repository.findById(id);
-        if(contentOptional.isEmpty()) {
+        if (contentOptional.isEmpty()) {
             throw new RuntimeException("Content not found by id: " + id);
         }
         Content content = contentOptional.get();
         Content old = new Content();
         BeanUtils.copyProperties(content, old);
         content.content = text;
-        content.update = new Timestamp(System.currentTimeMillis());
+        content.update = new Date(System.currentTimeMillis());
         // todo prevent conflicts in modified content
         content.hash = hash(content.content);
         content = repository.save(content);
@@ -249,12 +161,13 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
      * cloud side will not be affected
      * it should only be call when user logout
      * or specified by user
+     *
      * @param event publish clipboard event
      */
     public void clear(boolean event) {
         ensureRepositoryNotNull();
         repository.deleteAllInBatch();
-        if(event) {
+        if (event) {
             ClipboardClearEvent clipboardClearEvent = new ClipboardClearEvent(this);
             publisher.publishEvent(clipboardClearEvent);
         }
@@ -262,18 +175,20 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
 
     /**
      * delete content by id from local cache
-     * @param content content
-     * @param event publish event or not
+     *
+     * @param content   content
+     * @param event     publish event or not
      * @param exception throw exception when not found
      */
     public void delete(@NonNull Content content, boolean event, boolean exception) {
+        // todo rewrite
         ensureRepositoryNotNull();
         Optional<Content> contentOptional = repository.findById(content.id);
-        if(exception && contentOptional.isEmpty()) {
+        if (exception && contentOptional.isEmpty()) {
             throw new RuntimeException("Cannot find Content By Id: " + content);
         }
         repository.delete(content);
-        if(event) {
+        if (event) {
             Content data = contentOptional.orElse(null);
             ContentEvent contentEvent = new ContentDeleteEvent(this,
                     data, data);
@@ -282,9 +197,9 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
     }
 
 
-
     /**
      * get a content mach all
+     *
      * @param content match data
      * @return one result
      */
@@ -308,16 +223,6 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
         return repository.getContentsByStateEqualsAndStarEquals(Content.ContentState.CONTENT_STATE_NORMAL.STATE, true);
     }
 
-    public List<Content> getArchive() {
-        ensureRepositoryNotNull();
-        return repository.getContentsByStateEquals(Content.ContentState.CONTENT_STATE_ARCHIVE.STATE);
-    }
-
-    public List<Content> getRecycle() {
-        ensureRepositoryNotNull();
-        return repository.getContentsByStateEquals(Content.ContentState.CONTENT_STATE_RECYCLE.STATE);
-    }
-
 
     public List<Content> gets(Content content) {
         ensureRepositoryNotNull();
@@ -327,15 +232,14 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
     /**
      * THIS IS WHERE CONTENT FROM CLIPBOARD IS RECORD
      * IF CONTENT IN CLIPBOARD EXISTS IN LOCAL DATABASE
-     * UPDATE IT'S TIMESTAMP
+     * UPDATE IT'S Date
      * OTHERWISE INSERT INTO LOCAL DATABASE
+     *
      * @param clipboardUpdateEvent event
      */
     @Override
     public void onApplicationEvent(ClipboardUpdateEvent clipboardUpdateEvent) {
-        Content content = new Content();
-        content.content = clipboardUpdateEvent.getContent();
-        save(content);
+        Content content = create(clipboardUpdateEvent.getContent());
     }
 
     private void ensureRepositoryNotNull() {
@@ -351,54 +255,15 @@ public class CachedClipboardService implements ApplicationListener<ClipboardUpda
     }
 
     private void ensureApplicationInfoNotNull() {
-        if(applicationInfo == null) {
+        if (applicationInfo == null) {
             applicationInfo = context.getBean(ApplicationInfo.class);
         }
     }
 
-    private boolean isStateChangeValid(@NonNull Content.ContentState before,
-                                       @NonNull Content.ContentState now) {
-        switch (before) {
-            case CONTENT_STATE_NORMAL:
-                switch (now) {
-                    case CONTENT_STATE_ARCHIVE:
-                    case CONTENT_STATE_RECYCLE:
-                    case CONTENT_STATE_DELETE:
-                        return true;
-                    case CONTENT_STATE_NORMAL:
-                    default:
-                        return false;
-                }
-            case CONTENT_STATE_ARCHIVE:
-                switch (now) {
-                    case CONTENT_STATE_NORMAL:
-                    case CONTENT_STATE_RECYCLE:
-                    case CONTENT_STATE_DELETE:
-                        return true;
-                    case CONTENT_STATE_ARCHIVE:
-                    default:
-                        return false;
-                }
-            case CONTENT_STATE_RECYCLE:
-                switch (now) {
-                    case CONTENT_STATE_NORMAL:
-                    case CONTENT_STATE_ARCHIVE:
-                    case CONTENT_STATE_DELETE:
-                        return true;
-                    case CONTENT_STATE_RECYCLE:
-                    default:
-                        return false;
-                }
-            case CONTENT_STATE_DELETE:
-            default:
-                return false;
-        }
-    }
     @NonNull
-    private String hash(@NonNull String str) {
+    private byte[] hash(@NonNull String str) {
         ensureDigestNotNull();
-        byte[] bytes = digest.digest(str.getBytes(StandardCharsets.UTF_8));
-        return Base64Utils.encodeToString(bytes);
+        return digest.digest(str.getBytes(StandardCharsets.UTF_8));
     }
 
 }

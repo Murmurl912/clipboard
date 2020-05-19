@@ -47,11 +47,6 @@
                   <FontAwesomeIconView fx:id="starIcon" glyphName="STAR" />
                </graphic>
             </JFXButton>
-            <JFXButton fx:id="archive" layoutX="84.0" layoutY="10.0">
-               <graphic>
-                  <FontAwesomeIconView glyphName="ARCHIVE" />
-               </graphic>
-            </JFXButton>
             <JFXButton fx:id="copy" layoutX="118.0" layoutY="10.0" >
                <graphic>
                   <FontAwesomeIconView glyphName="COPY" />
@@ -87,11 +82,6 @@
             <JFXButton fx:id="ok" layoutX="349.0" layoutY="10.0">
                <graphic>
                   <FontAwesomeIconView glyphName="CHECK"/>
-               </graphic>
-            </JFXButton>
-            <JFXButton fx:id="recover" visible="false" managed="false">
-               <graphic>
-                  <FontAwesomeIconView glyphName="UNDO"/>
                </graphic>
             </JFXButton>
          </HBox>

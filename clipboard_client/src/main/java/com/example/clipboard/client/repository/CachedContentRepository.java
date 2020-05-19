@@ -11,13 +11,14 @@ import java.util.Optional;
 @Repository
 public interface CachedContentRepository extends JpaRepository<Content, String> {
 
-    public Long countContentByIdEquals(String id);
+    Long countContentByIdEquals(String id);
 
-    public List<Content> getContentsByStateEquals(Integer state);
+    List<Content> getContentsByStateEquals(Integer state);
 
-    public List<Content> getContentsByStateIn(Collection<Integer> state);
+    List<Content> getContentsByStateIn(Collection<Integer> state);
 
-    public Optional<Content> findContentByContentEqualsAndHashEquals(String content, String hash);
 
-    public List<Content> getContentsByStateEqualsAndStarEquals(Integer state, Boolean star);
+    List<Content> getContentsByStateEqualsAndStarEquals(Integer state, Boolean star);
+
+    Optional<Content> findContentByHashEquals(byte[] hash);
 }

@@ -7,6 +7,7 @@ import com.example.clipboard.client.event.ClipboardEvent;
  */
 public class ClipboardUpdateEvent extends ClipboardEvent {
     private final String content;
+
     public ClipboardUpdateEvent(Object source, String content) {
         super(source);
         this.content = content;
