@@ -19,11 +19,11 @@ public class ClipboardContent {
     public Timestamp contentVersion;
 
     public Boolean star;
-    @Field(value = "content_version")
+    @Field(value = "star_version")
     public Timestamp starVersion;
 
     public Integer state;
-    @Field(value = "content_version")
+    @Field(value = "state_version")
     public Timestamp stateVersion;
 
     public Timestamp create;
@@ -31,9 +31,7 @@ public class ClipboardContent {
 
     public static enum ContentState {
         CONTENT_STATE_NORMAL(0),
-        CONTENT_STATE_ARCHIVE(1),
-        CONTENT_STATE_RECYCLE(2),
-        CONTENT_STATE_DELETE(3);
+        CONTENT_STATE_DELETE(1);
 
         public int STATE;
         ContentState(int state) {
@@ -41,12 +39,10 @@ public class ClipboardContent {
         }
 
         public static ContentState get(int state) {
-            switch (state) {
-                case 1: return CONTENT_STATE_ARCHIVE;
-                case 2: return CONTENT_STATE_RECYCLE;
-                case 3: return CONTENT_STATE_DELETE;
-                default: return CONTENT_STATE_NORMAL;
+            if (state == 1) {
+                return CONTENT_STATE_DELETE;
             }
+            return CONTENT_STATE_NORMAL;
         }
     }
 }

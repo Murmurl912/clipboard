@@ -1,62 +1,100 @@
 package com.clipboard.clipboard_store.endpoint;
 
+import com.clipboard.clipboard_store.endpoint.model.ContentCreateModel;
+import com.clipboard.clipboard_store.endpoint.model.ContentStarModel;
+import com.clipboard.clipboard_store.endpoint.model.ContentStateModel;
+import com.clipboard.clipboard_store.endpoint.model.ContentTextModel;
+import com.clipboard.clipboard_store.event.ClipboardEvent;
 import com.clipboard.clipboard_store.repository.entity.ClipboardContent;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
+import com.clipboard.clipboard_store.service.ClipboardService;
+import com.clipboard.clipboard_store.service.ClipboardEventPublisher;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import javax.validation.Valid;
 
 @RestController
 public class ClipboardEndpoint {
 
-    private final ApplicationEventPublisher publisher;
-    public ClipboardEndpoint(ApplicationEventPublisher publisher) {
+
+    private final ClipboardEventPublisher publisher;
+    private final ClipboardService service;
+
+    public ClipboardEndpoint(ClipboardEventPublisher publisher,
+                             ClipboardService service) {
         this.publisher = publisher;
+        this.service = service;
     }
 
     @GetMapping(value = "/clipboard/account/{account}/contents",
             produces = {MediaType.APPLICATION_STREAM_JSON_VALUE})
-    public Flux<ClipboardContent> gets(@PathVariable String account) {
-        return null;
+    public Flux<ClipboardContent> gets(@PathVariable String account,
+                                       @RequestParam(required = false) Boolean star) {
+        if(star == null) {
+            return service.gets(account);
+        } else {
+            return service.gets(account, star);
+        }
     }
 
-    public Mono<ClipboardContent> get(String id) {
-        return null;
+    @GetMapping("/clipboard/account/{account}/content/{content}")
+    public Mono<ClipboardContent> get(@PathVariable String account, @PathVariable String content) {
+        return service.get(content);
     }
 
-    public Mono<ClipboardContent> create(ClipboardContent content) {
-        return null;
+    @PostMapping("/clipboard/account/{account}/content")
+    public Mono<ClipboardContent> create(@PathVariable String account,
+                                         @RequestBody @Valid ContentCreateModel model) {
+        ClipboardContent clipboardContent = new ClipboardContent();
+        clipboardContent.content = model.content;
+        clipboardContent.contentVersion = model.contentVersion;
+        clipboardContent.star = model.star;
+        clipboardContent.starVersion = model.starVersion;
+        clipboardContent.state = model.state;
+        clipboardContent.stateVersion = model.stateVersion;
+        clipboardContent.create = model.create;
+        clipboardContent.update = model.update;
+
+        return service.create(account, clipboardContent);
     }
 
-    public Mono<ClipboardContent> star(String id) {
-        return null;
+    @PatchMapping("/clipboard/account/{account}/content/{content}/star")
+    public Mono<ClipboardContent> star(@PathVariable String account,
+                                       @PathVariable String content,
+                                       @RequestBody @Valid ContentStarModel starModel) {
+        return service.star(content, starModel.star, starModel.starVersion);
     }
 
-    public Mono<ClipboardContent> unstar(String id) {
-        return null;
+
+    @PatchMapping("/clipboard/account/{account}/content/{content}/state")
+    public Mono<ClipboardContent> delete(@PathVariable String account,
+                                         @PathVariable String content,
+                                         @RequestBody @Valid ContentStateModel stateModel) {
+        return service.state(
+                content,
+                ClipboardContent.ContentState.get(stateModel.state),
+                stateModel.stateVersion);
     }
 
-    public Mono<ClipboardContent> archive(String id) {
-        return null;
+    @PatchMapping("/clipboard/account/{account}/content/{content}/text")
+    public Mono<ClipboardContent> text(@PathVariable String account,
+                                         @PathVariable String content,
+                                         @RequestBody @Valid ContentTextModel textModel) {
+        return service.content(
+                content,
+                textModel.content,
+                textModel.contentVersion);
     }
 
-    public Mono<ClipboardContent> unarchive(String id) {
-        return null;
-    }
-
-    public Mono<ClipboardContent> recycle(String id) {
-        return null;
-    }
-
-    public Mono<ClipboardContent> recover(String id) {
-        return null;
-    }
-
-    public Mono<ClipboardContent> delete(String id) {
-        return null;
+    @GetMapping(value = "/clipboard/account/{account}/event",
+            produces = MediaType.APPLICATION_STREAM_JSON_VALUE)
+    public Flux<ClipboardEvent> listen(@PathVariable String account,
+                                       WebSession webSession) {
+        return Flux.create(publisher).share()
+                .filter(clipboardEvent -> !clipboardEvent.getSource().equals(account));
     }
 }
