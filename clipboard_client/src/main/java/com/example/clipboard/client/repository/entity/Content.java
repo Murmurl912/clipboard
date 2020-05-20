@@ -18,6 +18,7 @@ import java.util.Objects;
 public class Content {
 
     @Id
+    public String uuid;
     public String id;
     public String account;
     public Integer status;

@@ -13,12 +13,12 @@ public interface CachedContentRepository extends JpaRepository<Content, String> 
 
     Long countContentByIdEquals(String id);
 
-    List<Content> getContentsByStateEquals(Integer state);
+    List<Content> getContentsByStateEqualsOrderByUpdateDesc(Integer state);
 
-    List<Content> getContentsByStateIn(Collection<Integer> state);
-
-
-    List<Content> getContentsByStateEqualsAndStarEquals(Integer state, Boolean star);
+    List<Content> getContentsByStateEqualsAndStarEqualsOrderByUpdateDesc(Integer state, Boolean star);
 
     Optional<Content> findContentByHashEquals(byte[] hash);
+
+    Optional<Content> findContentByIdEquals(String id);
+
 }
