@@ -1,17 +1,7 @@
 package playgorund;
 
-import com.example.clipboard.client.helper.PojoCopyHelper;
-import com.example.clipboard.client.entity.Content;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeanUtils;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
 
 
 public class Playground {

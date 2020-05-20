@@ -1,8 +1,8 @@
 package com.example.clipboard.client.service.task;
 
-import com.example.clipboard.client.event.ClipboardEvent;
-import com.example.clipboard.client.event.clipboard.ClipboardUpdateEvent;
-import com.example.clipboard.client.event.AppStartEvent;
+import com.example.clipboard.client.lifecycle.event.ClipboardEvent;
+import com.example.clipboard.client.lifecycle.event.clipboard.ClipboardUpdateEvent;
+import com.example.clipboard.client.lifecycle.event.AppStartEvent;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
 import org.springframework.context.ApplicationEventPublisher;

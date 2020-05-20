@@ -1,6 +1,7 @@
 package com.example.clipboard.client.lifecycle;
 
-import com.example.clipboard.client.event.AppStartEvent;
+import com.example.clipboard.client.lifecycle.event.AppStartEvent;
+import com.example.clipboard.client.lifecycle.event.StageReadyEvent;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

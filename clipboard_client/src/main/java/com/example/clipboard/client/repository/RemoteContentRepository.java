@@ -1,6 +1,6 @@
 package com.example.clipboard.client.repository;
 
-import com.example.clipboard.client.entity.Content;
+import com.example.clipboard.client.repository.entity.Content;
 import com.example.clipboard.client.repository.model.*;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Repository;
@@ -42,6 +42,14 @@ public class RemoteContentRepository {
                 .retrieve().bodyToFlux(Content.class);
     }
 
+    public Flux<Content> contents() {
+        return client
+                .get()
+                .uri("/clipboard/account/{account}/contents",
+                        account)
+                .retrieve().bodyToFlux(Content.class);
+    }
+
     public Mono<Content> content(String id) {
         return client
                 .get()
@@ -55,36 +63,37 @@ public class RemoteContentRepository {
                 .post()
                 .uri("/clipboard/account/{account}/content",
                         account)
-                .body(model, ContentCreateModel.class)
+                .body(Mono.just(model), ContentCreateModel.class)
                 .retrieve().bodyToMono(Content.class);
     }
 
     public Mono<Content> star(String id,
                               ContentStarModel model) {
-        return client.post()
+        return client
+                .patch()
                 .uri("/clipboard/account/{account}/content/{content}/star",
                         account, id)
-                .body(model, ContentStarModel.class)
+                .body(Mono.just(model), ContentStarModel.class)
                 .retrieve().bodyToMono(Content.class);
     }
 
     public Mono<Content> text(String id,
                               ContentTextModel model) {
         return client
-                .post()
+                .patch()
                 .uri("/clipboard/account/{account}/content/{content}/text",
                         account, id)
-                .body(model, ContentTextModel.class)
+                .body(Mono.just(model), ContentTextModel.class)
                 .retrieve().bodyToMono(Content.class);
     }
 
     public Mono<Content> state(String id,
                                ContentStateModel model) {
         return client
-                .post()
+                .patch()
                 .uri("/clipboard/account/{account}/content/{content}/state",
                         account, id)
-                .body(model, ContentStarModel.class)
+                .body(Mono.just(model), ContentStateModel.class)
                 .retrieve().bodyToMono(Content.class);
     }
 

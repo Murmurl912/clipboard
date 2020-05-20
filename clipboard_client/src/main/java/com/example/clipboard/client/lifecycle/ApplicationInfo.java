@@ -1,7 +1,7 @@
 package com.example.clipboard.client.lifecycle;
 
-import com.example.clipboard.client.entity.AccessToken;
-import com.example.clipboard.client.entity.Account;
+import com.example.clipboard.client.repository.entity.AccessToken;
+import com.example.clipboard.client.repository.entity.Account;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;

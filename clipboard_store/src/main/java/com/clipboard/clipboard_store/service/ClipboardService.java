@@ -220,7 +220,7 @@ public class ClipboardService {
                        content.contentVersion = data.contentVersion;
                        // overall version changed
                        content.update = new Date(System.currentTimeMillis());
-                       return repository.save(data);
+                       return repository.save(content);
                    }
                 })
                 .map(c -> {

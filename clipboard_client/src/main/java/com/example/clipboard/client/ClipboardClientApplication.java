@@ -17,7 +17,6 @@ public class ClipboardClientApplication {
 
     public static void main(String[] args) {
         System.out.println("Application Start At: " + System.currentTimeMillis());
-//        key();
         Application.launch(FxApplication.class, args);
     }
 

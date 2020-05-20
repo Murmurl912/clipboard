@@ -1,6 +1,6 @@
 package com.example.clipboard.client.service;
 
-import com.example.clipboard.client.entity.Content;
+import com.example.clipboard.client.repository.entity.Content;
 
 import java.util.List;
 import java.util.Optional;

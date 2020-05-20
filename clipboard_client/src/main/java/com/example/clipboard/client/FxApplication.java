@@ -1,6 +1,6 @@
 package com.example.clipboard.client;
 
-import com.example.clipboard.client.lifecycle.StageReadyEvent;
+import com.example.clipboard.client.lifecycle.event.StageReadyEvent;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;

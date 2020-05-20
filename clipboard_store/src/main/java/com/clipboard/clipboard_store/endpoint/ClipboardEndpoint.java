@@ -108,6 +108,10 @@ public class ClipboardEndpoint {
     public Flux<ClipboardEvent> listen(@PathVariable String account,
                                        WebSession webSession) {
         return Flux.create(publisher).share()
-                .filter(clipboardEvent -> !clipboardEvent.getSource().equals(account));
+                .filter(clipboardEvent -> clipboardEvent.getSource().equals(account))
+                .map(event -> {
+                    System.out.println(event);
+                    return event;
+                });
     }
 }
