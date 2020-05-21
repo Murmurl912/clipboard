@@ -86,41 +86,6 @@ public class ClipboardService {
                 });
     }
 
-    public Mono<ClipboardContent> star(String id,
-                                       boolean star,
-                                       Date Date) {
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new RuntimeException()))
-                .handle((content, sink) -> {
-                    if(content.starVersion.after(Date)) {
-                        sink.error(new RuntimeException());
-                    } else {
-                        sink.next(content);
-                    }
-                })
-                .cast(ClipboardContent.class)
-                .flatMap(content -> {
-                    if(!content.star.equals(star)) {
-                        content.star = star;
-                        content.starVersion = Date;
-                        // overall version changed
-                        content.update = new Date(System.currentTimeMillis());
-                        return repository.save(content).map(c -> {
-                            ClipboardContentEvent event =
-                                    new ClipboardContentEvent(
-                                            c.id,
-                                            c.account,
-                                            c.star ? CONTENT_STAR_EVENT : CONTENT_UNSTAR_EVENT,
-                                            c.starVersion);
-                            publisher.publishEvent(event);
-                            return c;
-                        });
-                    } else {
-                        return Mono.just(content);
-                    }
-                });
-    }
-
     public Mono<ClipboardContent> state(String id,
                                         ContentState state,
                                         Date Date) {
@@ -215,9 +180,6 @@ public class ClipboardService {
                    } else {
                        // exist in current database
                        content.state = ContentState.CONTENT_STATE_NORMAL.STATE;
-                       content.stateVersion = new Date(System.currentTimeMillis());
-                       content.stateVersion = new Date(System.currentTimeMillis());
-                       content.contentVersion = data.contentVersion;
                        // overall version changed
                        content.update = new Date(System.currentTimeMillis());
                        return repository.save(content);

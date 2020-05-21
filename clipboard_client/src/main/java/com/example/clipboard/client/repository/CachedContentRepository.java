@@ -14,8 +14,6 @@ public interface CachedContentRepository extends JpaRepository<Content, String> 
 
     List<Content> getContentsByStateEqualsOrderByUpdateDesc(Integer state);
 
-    List<Content> getContentsByStateEqualsAndStarEqualsOrderByUpdateDesc(Integer state, Boolean star);
-
     Optional<Content> findContentByHashEquals(byte[] hash);
 
     Optional<Content> findContentByIdEquals(String id);

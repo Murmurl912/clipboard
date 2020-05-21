@@ -35,7 +35,6 @@ public class ClipboardEvent extends AppEvent {
 
     public static enum EventType {
         CLIPBOARD_REPORT,
-        CLIPBOARD_UPDATE,
         CLIPBOARD_CREATE,
         CLIPBOARD_CHECK
     }

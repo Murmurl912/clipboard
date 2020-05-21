@@ -49,7 +49,6 @@ public class MainViewController {
     public GridView<Content> container;
     public StackPane root;
     public JFXButton clipboard;
-    public JFXButton star;
     public JFXButton account;
     public JFXButton trash;
     public JFXButton signout;
@@ -95,8 +94,6 @@ public class MainViewController {
                         cell.getHolder().put("node", node);
                         cell.getHolder().put("title", node.lookup("#title"));
                         cell.getHolder().put("content", node.lookup("#content"));
-                        Node star = node.lookup("#star");
-                        cell.getHolder().put("star", star);
                         cell.getHolder().put("time", node.lookup("#time"));
                         Node delete = node.lookup("#trash");
                         cell.getHolder().put("delete", delete);
@@ -119,10 +116,6 @@ public class MainViewController {
                             }
                         });
 
-                        star.setOnMouseClicked(e -> {
-                            star(cell.getIndex(), cell.getItem());
-                        });
-
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -139,13 +132,6 @@ public class MainViewController {
                     Node label = cell.getHolder().get("content");
                     ((Label) label).setText(content.content);
 
-                    if (content.star) {
-                        ((FontAwesomeIconView) ((JFXButton) cell.getHolder().get("star")).getGraphic())
-                                .setIcon(FontAwesomeIcon.STAR);
-                    } else {
-                        ((FontAwesomeIconView) ((JFXButton) cell.getHolder().get("star")).getGraphic())
-                                .setIcon(FontAwesomeIcon.STAR_ALT);
-                    }
                     ((Label) cell.getHolder().get("time"))
                             .setText(DateFormat.getDateTimeInstance().format(content.update));
                 }));
@@ -169,10 +155,6 @@ public class MainViewController {
 
         menuToggle.setOnMouseClicked(e -> {
             toggleMenu();
-        });
-
-        star.setOnMouseClicked(e -> {
-            navigate(MainViewState.VIEW_STATE_STAR);
         });
 
         clipboard.setOnMouseClicked(e -> {
@@ -246,10 +228,6 @@ public class MainViewController {
                 }
                 break;
 
-                case VIEW_STATE_STAR: {
-                    toStar();
-                }
-                break;
 
                 default: {
                     toClipboard();
@@ -347,17 +325,6 @@ public class MainViewController {
         dialog.show();
     }
 
-    private void toStar() {
-        menuToggle.setText("Star");
-        ClipboardModel model = context.getBean(ClipboardModel.class);
-        container.setItems(null);
-        container.setItems(model.star());
-        model.star().addListener((ListChangeListener<? super Content>) change -> {
-            System.out.println(Thread.currentThread());
-            System.out.println(change);
-        });
-    }
-
     private void toClipboard() {
         menuToggle.setText("Clipboard");
         ClipboardModel model = context.getBean(ClipboardModel.class);
@@ -381,24 +348,6 @@ public class MainViewController {
         ClipboardContent clipboardContent = new ClipboardContent();
         clipboardContent.putString(content.content);
         clipboard.setContent(clipboardContent);
-    }
-
-    private void star(int index, Content content) {
-        content = container.getItems().get(index);
-        switch (Content.ContentState.get(content.state)) {
-            case CONTENT_STATE_NORMAL:
-//                if (clipboardViewModel == null) {
-//                    clipboardViewModel =
-//                            context.getBean(ClipboardViewModel.class);
-//                }
-//                clipboardViewModel.star(content.id, !content.star);
-                ClipboardModel model = context.getBean(ClipboardModel.class);
-                model.star(content.id, !content.star);
-                break;
-            case CONTENT_STATE_DELETE:
-            default:
-                throw new RuntimeException("Cannot star content: " + content);
-        }
     }
 
     private void delete(int index, Content content) {
@@ -432,7 +381,6 @@ public class MainViewController {
         TextArea textArea = (TextArea) dialog.lookup("#content");
         Node copy = dialog.lookup("#copy");
         Node cancel = dialog.lookup("#cancel");
-        Node star = dialog.lookup("#star");
         Node ok = dialog.lookup("#ok");
         Node delete = dialog.lookup("#delete");
         Node device = dialog.lookup("#device");
@@ -445,28 +393,11 @@ public class MainViewController {
         ok.setManaged(false);
         ok.setVisible(false);
 
-        if (data.star) {
-            ((FontAwesomeIconView) ((JFXButton) star).getGraphic()).setIcon(FontAwesomeIcon.STAR);
-        } else {
-            ((FontAwesomeIconView) ((JFXButton) star).getGraphic()).setIcon(FontAwesomeIcon.STAR_ALT);
-        }
-
-        star.setOnMouseClicked(e -> {
-            if (textArea.isEditable()) {
-                return;
-            }
-            ClipboardModel model = context.getBean(ClipboardModel.class);
-            model.star(data.id, !data.star);
-//            clipboardViewModel.star(data.id, !data.star);
-        });
-
         edit.setOnMouseClicked(e -> {
             ok.setVisible(true);
             ok.setManaged(true);
             edit.setVisible(false);
             edit.setManaged(false);
-            star.setVisible(false);
-            star.setManaged(false);
             copy.setVisible(false);
             copy.setManaged(false);
             delete.setVisible(false);
@@ -481,8 +412,6 @@ public class MainViewController {
                 ok.setManaged(false);
                 edit.setManaged(true);
                 edit.setVisible(true);
-                star.setVisible(true);
-                star.setManaged(true);
                 copy.setVisible(true);
                 copy.setManaged(true);
                 delete.setVisible(true);
@@ -500,15 +429,12 @@ public class MainViewController {
                 ok.setManaged(false);
                 edit.setManaged(true);
                 edit.setVisible(true);
-                star.setVisible(true);
-                star.setManaged(true);
                 copy.setVisible(true);
                 copy.setManaged(true);
                 delete.setVisible(true);
                 delete.setManaged(true);
 
                 ClipboardModel model = context.getBean(ClipboardModel.class);
-                model.star();
             }
         });
 
@@ -554,7 +480,6 @@ public class MainViewController {
         VIEW_STATE_PASSWORD,
         VIEW_STATE_EMAIL,
         VIEW_STATE_ACTIVATE,
-        VIEW_STATE_STAR,
         VIEW_STATE_SETTING,
     }
 }

@@ -53,35 +53,12 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                     } else {
                         content = optional.get();
                         if(Objects.equals(content.content, text)) {
-                            content.contentVersion = new Date();
-                            content.starVersion = new Date();
                             content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-                            content.stateVersion = new Date();
                             content.update = new Date();
                         } else {
                             content = createContent(text, UUID.randomUUID().toString(), null);
                         }
                     }
-                    return content;
-                })
-                .map(cached::save)
-                .map(content -> {
-                    submit(content);
-                    return content;
-                })
-                .subscribeOn(Schedulers.boundedElastic());
-    }
-
-    public Mono<Content> star(String id, boolean star) {
-        return Mono.fromCallable(()-> cached.findContentByIdEquals(id))
-                .handle((optional, sink) -> {
-                    optional.ifPresent(sink::next);
-                })
-                .cast(Content.class)
-                .map(content -> {
-                    content.star = star;
-                    content.update = new Date();
-                    content.starVersion = new Date();
                     return content;
                 })
                 .map(cached::save)
@@ -101,7 +78,6 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 .map(content -> {
                     content.state = state.STATE;
                     content.update = new Date();
-                    content.stateVersion = new Date();
                     return content;
                 })
                 .map(cached::save)
@@ -160,8 +136,6 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
         switch (event.getType()) {
             case CLIPBOARD_CREATE:
                 break;
-            case CLIPBOARD_UPDATE:
-                break;
             case CLIPBOARD_CHECK:
                 break;
             case CLIPBOARD_REPORT:
@@ -180,14 +154,9 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
         Content model = new Content();
         model.id = id;
         model.account = account;
-        model.star = false;
         model.content = text;
         model.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-        model.starVersion =
-                model.contentVersion
-                        = model.stateVersion
-                        = model.create
-                        = model.update = new Date();
+        model.create = model.update = new Date();
         model.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
         model.update = new Date();
         model.create = new Date();

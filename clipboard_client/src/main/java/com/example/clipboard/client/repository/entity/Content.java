@@ -25,13 +25,7 @@ public class Content {
 
     @Lob
     public String content;
-    public Date contentVersion;
-
-    public Boolean star;
-    public Date starVersion;
-
     public Integer state;
-    public Date stateVersion;
 
     public byte[] hash;
 
@@ -49,8 +43,6 @@ public class Content {
                    Date contentVersion,
                    ContentState state,
                    Date stateVersion,
-                   boolean star,
-                   Date starVersion,
                    byte[] hash,
                    Date create,
                    Date update) {
@@ -62,9 +54,6 @@ public class Content {
         this.hash = hash;
         this.create = create;
         this.update = update;
-        this.contentVersion = contentVersion;
-        this.starVersion = starVersion;
-        this.stateVersion = stateVersion;
     }
 
     public String getId() {
@@ -130,14 +119,6 @@ public class Content {
 
     public void setUpdate(Timestamp update) {
         this.update = update;
-    }
-
-    public Boolean getStar() {
-        return star;
-    }
-
-    public void setStar(Boolean star) {
-        this.star = star;
     }
 
     @Override

@@ -12,16 +12,7 @@ public class ClipboardContent {
 
     public String content;
     public byte[] hash;
-    @Field(value = "content_version")
-    public Date contentVersion;
-
-    public Boolean star;
-    @Field(value = "star_version")
-    public Date starVersion;
-
     public Integer state;
-    @Field(value = "state_version")
-    public Date stateVersion;
 
     public Date create;
     public Date update;
