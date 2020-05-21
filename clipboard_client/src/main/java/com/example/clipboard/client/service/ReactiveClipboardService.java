@@ -1,8 +1,8 @@
 package com.example.clipboard.client.service;
 
 import com.example.clipboard.client.repository.CachedContentRepository;
-import com.example.clipboard.client.repository.RemoteContentRepository;
 import com.example.clipboard.client.repository.entity.Content;
+import com.example.clipboard.client.service.worker.ClipboardSyncEvent;
 import com.example.clipboard.client.service.worker.event.ClipboardEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
@@ -63,25 +63,28 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 })
                 .map(cached::save)
                 .map(content -> {
+                    // handle create
+                    context.publishEvent(new ClipboardSyncEvent(content.id, content));
                     submit(content);
                     return content;
                 })
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public Mono<Content> state(String id, Content.ContentState state) {
+    public Mono<Content> delete(String id) {
         return Mono.fromCallable(()-> cached.findContentByIdEquals(id))
                 .handle((optional, sink) -> {
                     optional.ifPresent(sink::next);
                 })
                 .cast(Content.class)
                 .map(content -> {
-                    content.state = state.STATE;
+                    content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
                     content.update = new Date();
                     return content;
                 })
                 .map(cached::save)
                 .map(content -> {
+                    context.publishEvent(new ClipboardSyncEvent(content.id, content));
                     submit(content);
                     return content;
                 })
@@ -103,15 +106,9 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
     }
 
     protected Flux<Content> clipboard() {
-        // fetch data from remote remote
 
-        // read from local database
         return Mono
                 .fromCallable(() -> {
-//                    remote.contents()
-//                            .subscribeOn(Schedulers.boundedElastic())
-//                            .onErrorMap(error -> null)
-//                            .subscribe(this::submit);
                     return cached.getContentsByStateEqualsOrderByUpdateDesc(
                             Content.ContentState.CONTENT_STATE_NORMAL.STATE);
                 })
@@ -121,7 +118,10 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 })
                 .flatMapIterable((contents)->contents)
                 .map(c -> {
-                    System.out.println(c);
+                    // handle history
+                    if(c.status == Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
+                        context.publishEvent(new ClipboardSyncEvent(c.id, c));
+                    }
                     return c;
                 })
                 .subscribeOn(Schedulers.boundedElastic());

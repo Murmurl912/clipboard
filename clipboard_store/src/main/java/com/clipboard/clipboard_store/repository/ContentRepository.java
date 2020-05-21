@@ -20,13 +20,8 @@ public interface ContentRepository extends ReactiveMongoRepository<ClipboardCont
     public Flux<ClipboardContent> findAllByAccountEquals(String account);
 
     @Query(fields = "{content: 0}")
-    public Flux<ClipboardContent> findAllByAccountEqualsAndStar(String account, Boolean star);
-
-    @Query(fields = "{content: 0}")
     public Flux<ClipboardContent> findAllByAccountEqualsAndStateEquals(String account, Integer state);
 
-    @Query(fields = "{content: 0}")
-    public Flux<ClipboardContent> findAllByAccountEqualsAndStateEqualsAndStarEquals(String account, Integer state, Boolean star);
 
 
 }

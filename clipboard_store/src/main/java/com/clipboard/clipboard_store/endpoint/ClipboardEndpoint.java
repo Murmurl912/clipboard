@@ -1,9 +1,7 @@
 package com.clipboard.clipboard_store.endpoint;
 
-import com.clipboard.clipboard_store.endpoint.model.ContentCreateModel;
-import com.clipboard.clipboard_store.endpoint.model.ContentStarModel;
-import com.clipboard.clipboard_store.endpoint.model.ContentStateModel;
-import com.clipboard.clipboard_store.endpoint.model.ContentTextModel;
+import com.clipboard.clipboard_store.endpoint.model.ContentModel;
+import com.clipboard.clipboard_store.endpoint.model.StateModel;
 import com.clipboard.clipboard_store.event.ClipboardEvent;
 import com.clipboard.clipboard_store.repository.entity.ClipboardContent;
 import com.clipboard.clipboard_store.service.ClipboardEventPublisher;
@@ -15,6 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import java.util.Date;
 
 @RestController
 public class ClipboardEndpoint {
@@ -44,13 +43,8 @@ public class ClipboardEndpoint {
 
     @GetMapping(value = "/clipboard/account/{account}/contents",
             produces = {MediaType.APPLICATION_STREAM_JSON_VALUE})
-    public Flux<ClipboardContent> gets(@PathVariable String account,
-                                       @RequestParam(required = false) Boolean star) {
-        if(star == null) {
-            return service.gets(account);
-        } else {
-            return service.gets(account, star);
-        }
+    public Flux<ClipboardContent> gets(@PathVariable String account) {
+        return service.gets(account);
     }
 
     @GetMapping("/clipboard/account/{account}/content/{content}")
@@ -60,47 +54,21 @@ public class ClipboardEndpoint {
     }
 
     @PostMapping("/clipboard/account/{account}/content")
-    public Mono<ClipboardContent> create(@PathVariable String account,
-                                         @RequestBody @Valid ContentCreateModel model) {
-        ClipboardContent clipboardContent = new ClipboardContent();
-        clipboardContent.content = model.content;
-        clipboardContent.contentVersion = model.contentVersion;
-        clipboardContent.star = model.star;
-        clipboardContent.starVersion = model.starVersion;
-        clipboardContent.state = model.state;
-        clipboardContent.stateVersion = model.stateVersion;
-        clipboardContent.create = model.create;
-        clipboardContent.update = model.update;
-
-        return service.create(account, clipboardContent);
+    public Mono<ClipboardContent> content(@PathVariable String account,
+                                        @RequestBody @Valid ContentModel contentModel) {
+        ClipboardContent data = new ClipboardContent();
+        data.content = contentModel.content;
+        data.update = contentModel.update;
+        data.create = contentModel.create;
+        data.account = account;
+        return service.create(account, data);
     }
-
-    @PatchMapping("/clipboard/account/{account}/content/{content}/star")
-    public Mono<ClipboardContent> star(@PathVariable String account,
-                                       @PathVariable String content,
-                                       @RequestBody @Valid ContentStarModel starModel) {
-        return service.star(content, starModel.star, starModel.starVersion);
-    }
-
 
     @PatchMapping("/clipboard/account/{account}/content/{content}/state")
     public Mono<ClipboardContent> delete(@PathVariable String account,
                                          @PathVariable String content,
-                                         @RequestBody @Valid ContentStateModel stateModel) {
-        return service.state(
-                content,
-                ClipboardContent.ContentState.get(stateModel.state),
-                stateModel.stateVersion);
-    }
-
-    @PatchMapping("/clipboard/account/{account}/content/{content}/text")
-    public Mono<ClipboardContent> text(@PathVariable String account,
-                                         @PathVariable String content,
-                                         @RequestBody @Valid ContentTextModel textModel) {
-        return service.content(
-                content,
-                textModel.content,
-                textModel.contentVersion);
+                                         @RequestBody Date time) {
+        return service.delete(account, content, time);
     }
 
     @GetMapping(value = "/clipboard/account/{account}/event",

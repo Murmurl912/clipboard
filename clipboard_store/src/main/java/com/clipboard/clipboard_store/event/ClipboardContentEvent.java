@@ -48,11 +48,7 @@ public class ClipboardContentEvent extends ClipboardEvent {
 
     public static enum ClipboardContentEventType {
         CONTENT_CREATE_EVENT(0),
-        CONTENT_UPDATE_EVENT(1),
-        CONTENT_STAR_EVENT(2),
-        CONTENT_UNSTAR_EVENT(3),
-        CONTENT_DELETE_EVENT(4);
-
+        CONTENT_STATE_EVENT(1);
         public int EVENT;
 
         ClipboardContentEventType(int event) {

@@ -40,9 +40,7 @@ public class Content {
                    String account,
                    ContentStatus status,
                    String content,
-                   Date contentVersion,
                    ContentState state,
-                   Date stateVersion,
                    byte[] hash,
                    Date create,
                    Date update) {

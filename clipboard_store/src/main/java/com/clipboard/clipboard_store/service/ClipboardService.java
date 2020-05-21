@@ -40,11 +40,6 @@ public class ClipboardService {
                 .findAllByAccountEquals(account);
     }
 
-    public Flux<ClipboardContent> versions(String account, Boolean star) {
-        return repository
-                .findAllByAccountEqualsAndStar(account, star);
-    }
-
     public Flux<ClipboardContent> version(String content) {
         return repository.findFirstByIdEquals(content);
     }
@@ -54,20 +49,6 @@ public class ClipboardService {
                 .matching(
                         Criteria.where("account")
                                 .is(account)
-                                .and("state")
-                                .is(ContentState.CONTENT_STATE_NORMAL.STATE)
-                ).all();
-
-    }
-
-    public Flux<ClipboardContent> gets(String account,
-                                       Boolean star) {
-        return template.query(ClipboardContent.class)
-                .matching(
-                        Criteria.where("account")
-                                .is(account)
-                                .and("star")
-                                .is(star)
                                 .and("state")
                                 .is(ContentState.CONTENT_STATE_NORMAL.STATE)
                 ).all();
@@ -86,87 +67,8 @@ public class ClipboardService {
                 });
     }
 
-    public Mono<ClipboardContent> state(String id,
-                                        ContentState state,
-                                        Date Date) {
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new RuntimeException()))
-                .handle((content, sink) -> {
-                    if(content.stateVersion.after(Date)) {
-                        sink.error(new RuntimeException());
-                    } else {
-                        sink.next(content);
-                    }
-                })
-                .cast(ClipboardContent.class)
-                .handle((content, sink) -> {
-                    if(content.state == ContentState.CONTENT_STATE_DELETE.STATE) {
-                        sink.error(new RuntimeException());
-                    } else {
-                        sink.next(content);
-                    }
-                })
-                .cast(ClipboardContent.class)
-                .flatMap(content -> {
-                    if(content.state == state.STATE) {
-                        return Mono.just(content);
-                    }
-                    content.state = state.STATE;
-                    content.stateVersion = new Date(System.currentTimeMillis());
-                    // overall version changed
-                    content.update = new Date(System.currentTimeMillis());
-                    return repository.save(content).map(c -> {
-                        ClipboardContentEvent event =
-                                new ClipboardContentEvent(
-                                        c.id,
-                                        c.account,
-                                        CONTENT_DELETE_EVENT,
-                                        c.stateVersion);
-                        publisher.publishEvent(event);
-                        return c;
-                    });
-                });
-    }
-
-    public Mono<ClipboardContent> content(String id,
-                                          String text,
-                                          Date Date) {
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new RuntimeException()))
-                .handle((content, sink) -> {
-                    if(content.contentVersion.after(Date)) {
-                        sink.error(new RuntimeException());
-                    } else {
-                        sink.next(content);
-                    }
-                })
-                .cast(ClipboardContent.class)
-                .flatMap(content -> {
-                    if(content.content.equals(text)) {
-                        return Mono.just(content);
-                    }
-
-                    // todo handle changed text conflicts
-                    content.content = text;
-                    // overall version changed
-                    content.update = new Date(System.currentTimeMillis());
-                    content.contentVersion = new Date(System.currentTimeMillis());
-
-
-                    return repository.save(content).map(c -> {
-                        ClipboardContentEvent event =
-                                new ClipboardContentEvent(
-                                        c.id,
-                                        c.account,
-                                        CONTENT_UPDATE_EVENT,
-                                        c.contentVersion);
-                        publisher.publishEvent(event);
-                        return c;
-                    });
-                });
-    }
-
-    public Mono<ClipboardContent> create(String account, ClipboardContent data) {
+    public Mono<ClipboardContent> create(String account,
+                                         ClipboardContent data) {
         return Mono.fromCallable(()-> hash(data.content.getBytes(StandardCharsets.UTF_8)))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(hash -> repository.findFirstByHashEqualsAndAccountEquals(hash, account))
@@ -178,22 +80,35 @@ public class ClipboardService {
                        data.account = account;
                        return repository.save(data);
                    } else {
+                       if(content.update.after(data.update)) {
+                           return Mono.just(content);
+                       }
+
                        // exist in current database
                        content.state = ContentState.CONTENT_STATE_NORMAL.STATE;
                        // overall version changed
-                       content.update = new Date(System.currentTimeMillis());
+                       content.update = data.update;
                        return repository.save(content);
                    }
                 })
                 .map(c -> {
                     ClipboardContentEvent event =
-                            new ClipboardContentEvent(
-                                    c.id,
-                                    c.account,
-                                    CONTENT_CREATE_EVENT,
-                                    c.contentVersion);
+                            new ClipboardContentEvent(c.id, account, CONTENT_CREATE_EVENT, c.update);
                     publisher.publishEvent(event);
                     return c;
+                });
+    }
+
+    public Mono<ClipboardContent> delete(String account, String id, Date time) {
+        return repository.findById(id)
+                .flatMap(content -> {
+                    // last write win
+                    if(content.update.after(time)) {
+                        return Mono.just(content);
+                    }
+
+                    content.state = ContentState.CONTENT_STATE_DELETE.STATE;
+                    return repository.save(content);
                 });
     }
 

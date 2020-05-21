@@ -36,16 +36,11 @@ public class ClipboardModel implements Consumer<Content> {
     }
 
     public void state(String id, Content.ContentState state) {
-        service.state(id, state)
+        service.delete(id)
                 .subscribe(content -> {
                     Platform.runLater(()->{
                         contents.removeIf(data ->
                                 Objects.equals(data.id, content.id));
-                        if(content.state ==
-                                Content.ContentState.CONTENT_STATE_DELETE.STATE) {
-                            return;
-                        }
-                        contents.add(0, content);
                     });
                 });
     }

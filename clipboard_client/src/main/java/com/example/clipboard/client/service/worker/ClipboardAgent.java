@@ -1,6 +1,5 @@
 package com.example.clipboard.client.service.worker;
 
-import com.example.clipboard.client.repository.model.ClipboardEventModel;
 import com.example.clipboard.client.service.worker.event.AgentEvent;
 import com.example.clipboard.client.service.worker.event.AgentStatusChangeEvent;
 import com.example.clipboard.client.service.worker.event.ClipboardEvent;
