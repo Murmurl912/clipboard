@@ -1,5 +1,6 @@
 package com.example.clipboard.client.service;
 
+import com.example.clipboard.client.lifecycle.event.ContentEvent;
 import com.example.clipboard.client.lifecycle.event.content.ContentCreateEvent;
 import com.example.clipboard.client.lifecycle.event.content.ContentStarEvent;
 import com.example.clipboard.client.lifecycle.event.content.ContentStateEvent;
@@ -12,8 +13,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Example;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.*;
 import reactor.core.scheduler.Schedulers;
 
 import javax.validation.constraints.NotNull;
@@ -28,21 +28,18 @@ import java.util.function.Function;
 @Service
 public class ReactiveClipboardService {
 
-    private final RemoteContentRepository remote;
     private final CachedContentRepository cached;
-    private final ApplicationEventPublisher publisher;
     private final MessageDigest digest;
     private String account;
-
-    public ReactiveClipboardService(RemoteContentRepository remote,
-                                    CachedContentRepository cached,
-                                    ApplicationEventPublisher publisher,
+    private FluxProcessor<Content, Content> processor;
+    private FluxSink<Content> sink;
+    public ReactiveClipboardService(CachedContentRepository cached,
                                     MessageDigest digest) {
-
-        this.remote = remote;
+        EmitterProcessor<Content> clipboardProcessor = EmitterProcessor.create();
         this.cached = cached;
-        this.publisher = publisher;
         this.digest = digest;
+        processor = EmitterProcessor.create();
+        sink = processor.sink();
     }
 
     public Mono<Content> create(String text) {
@@ -124,7 +121,8 @@ public class ReactiveClipboardService {
                 .fromCallable(() -> cached
                         .getContentsByStateEqualsOrderByUpdateDesc(Content.ContentState.CONTENT_STATE_NORMAL.STATE)
                 )
-                .flatMapIterable((contents)->contents);
+                .flatMapIterable((contents)->contents)
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     public Flux<Content> star(boolean star) {
@@ -133,7 +131,22 @@ public class ReactiveClipboardService {
                         .getContentsByStateEqualsAndStarEqualsOrderByUpdateDesc(
                                 Content.ContentState.CONTENT_STATE_NORMAL.STATE, star)
                 )
-                .flatMapIterable((contents)->contents);
+                .flatMapIterable((contents)->contents)
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Publisher<Content> contents() {
+        return processor.share();
+    }
+
+    private void submit(Content content) {
+        sink.next(content);
+    }
+
+    private void refresh() {
+        clipboard().subscribe(content -> {
+            sink.next(content);
+        });
     }
 
     private String getAccount() {

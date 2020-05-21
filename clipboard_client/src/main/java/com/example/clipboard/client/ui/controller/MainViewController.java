@@ -49,6 +49,7 @@ public class MainViewController {
     public TextField searchEntry;
     public JFXButton search;
     public GridView<Content> container;
+
     private final ListChangeListener<Content>
             clipboardListener = change -> {
         Platform.runLater(() -> {
@@ -56,6 +57,7 @@ public class MainViewController {
             container.getItems().addAll(change.getList());
         });
     };
+
     private final ListChangeListener<Content>
             starListener = change -> {
         Platform.runLater(() -> {
@@ -63,6 +65,7 @@ public class MainViewController {
             container.getItems().addAll(change.getList());
         });
     };
+
     private final ListChangeListener<Content>
             archiveListener = change -> {
         Platform.runLater(() -> {
@@ -70,6 +73,7 @@ public class MainViewController {
             container.getItems().addAll(change.getList());
         });
     };
+
     private final ListChangeListener<Content>
             recycleListener = change -> {
         Platform.runLater(() -> {
@@ -77,6 +81,7 @@ public class MainViewController {
             container.getItems().addAll(change.getList());
         });
     };
+
     public StackPane root;
     public JFXButton clipboard;
     public JFXButton star;
@@ -423,7 +428,6 @@ public class MainViewController {
 
     }
 
-
     private void copy(int index, Content content) {
         content = container.getItems().get(index);
         Clipboard clipboard = Clipboard.getSystemClipboard();
@@ -431,7 +435,6 @@ public class MainViewController {
         clipboardContent.putString(content.content);
         clipboard.setContent(clipboardContent);
     }
-
 
     private void star(int index, Content content) {
         content = container.getItems().get(index);

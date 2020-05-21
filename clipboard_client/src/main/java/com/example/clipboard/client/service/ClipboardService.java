@@ -9,6 +9,7 @@ import com.example.clipboard.client.repository.model.ContentCreateModel;
 import com.example.clipboard.client.repository.model.ContentStarModel;
 import com.example.clipboard.client.repository.model.ContentStateModel;
 import com.example.clipboard.client.repository.model.ContentTextModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
 import org.springframework.lang.NonNull;
@@ -29,7 +30,8 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
     private final ApplicationEventPublisher publisher;
     private final MessageDigest digest;
     private final String account = "test";
-    
+    @Autowired
+    private ReactiveClipboardService service;
     public ClipboardService(RemoteContentRepository remote,
                             CachedContentRepository cached,
                             ApplicationEventPublisher publisher, 
@@ -48,6 +50,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
         }
         String uuid = UUID.randomUUID().toString();
         ContentCreateModel model = createModel(text, uuid, account);
+
         remote.create(model)
                 .subscribe(data -> {
                     ContentCreateEvent event = new ContentCreateEvent(data.id, data);
