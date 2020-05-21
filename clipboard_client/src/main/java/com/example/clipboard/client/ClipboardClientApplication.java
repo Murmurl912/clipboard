@@ -1,5 +1,6 @@
 package com.example.clipboard.client;
 
+import com.example.clipboard.client.repository.entity.App;
 import javafx.application.Application;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -25,15 +26,4 @@ public class ClipboardClientApplication {
     MessageDigest digest() throws NoSuchAlgorithmException {
         return MessageDigest.getInstance("SHA1");
     }
-
-    @Bean("ABC")
-    DataSource dataSource() {
-        DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
-        dataSourceBuilder.driverClassName("org.h2.Driver");
-        dataSourceBuilder.url("jdbc:h2:file:./app");
-        dataSourceBuilder.username("sa");
-        dataSourceBuilder.password("password");
-        return dataSourceBuilder.build();
-    }
-
 }

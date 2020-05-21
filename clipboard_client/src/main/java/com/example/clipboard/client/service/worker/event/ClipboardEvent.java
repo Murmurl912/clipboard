@@ -1,9 +1,5 @@
 package com.example.clipboard.client.service.worker.event;
 
-import com.example.clipboard.client.lifecycle.event.AppEvent;
-import com.example.clipboard.client.repository.entity.Content;
-import com.example.clipboard.client.repository.model.ContentModel;
-
 import java.util.Map;
 
 public class ClipboardEvent extends AppEvent {

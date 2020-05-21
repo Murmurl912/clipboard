@@ -1,9 +1,8 @@
 package com.example.clipboard.client.service.worker;
 
-import com.example.clipboard.client.lifecycle.event.clipboard.ClipboardReportEvent;
-import com.example.clipboard.client.service.worker.event.AgentStatusChangeEvent;
 import com.example.clipboard.client.repository.model.ClipboardEventModel;
 import com.example.clipboard.client.service.worker.event.AgentEvent;
+import com.example.clipboard.client.service.worker.event.AgentStatusChangeEvent;
 import com.example.clipboard.client.service.worker.event.ClipboardEvent;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
@@ -14,7 +13,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.Disposable;
@@ -95,6 +93,7 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
                         .bodyToFlux(ClipboardEventModel.class)
                         .map(model -> {
                             logger.info("Receive Cloud Clipboard Event: " + model.toString());
+
                             return model;
                         })
                         .doOnError(e -> {

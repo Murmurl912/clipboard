@@ -1,65 +1,46 @@
 package com.example.clipboard.client.ui.model;
 
 import com.example.clipboard.client.repository.entity.Content;
+import com.example.clipboard.client.service.AppContext;
 import com.example.clipboard.client.service.ReactiveClipboardService;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.SortedList;
-import net.rgielen.fxweaver.core.FxContextLoader;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 @Component
-public class ClipboardModel {
+public class ClipboardModel implements Consumer<Content> {
 
-    private ObservableList<Content> contents;
-    private ObservableList<Content> stars;
+    private final ObservableList<Content> contents;
+    private final ObservableList<Content> stars;
     private final ReactiveClipboardService service;
+    private final AppContext appContext;
 
-    public ClipboardModel(ReactiveClipboardService service) {
+    public ClipboardModel(ReactiveClipboardService service,
+                          AppContext appContext) {
         this.service = service;
+        this.appContext = appContext;
         contents = FXCollections.observableArrayList();
-        contents = contents.sorted((a, b) -> a.update.compareTo(b.update));
         stars = FXCollections.observableArrayList();
-        stars = stars.sorted((a, b) -> a.update.compareTo(b.update));
+        service.subscribe().subscribe(this);
+        refresh();
+    }
+
+    public void refresh() {
+        service.refresh();
     }
 
     public ObservableList<Content> clipboard() {
-        service.clipboard()
-                .filter(content -> content.state ==
-                        Content.ContentState.CONTENT_STATE_DELETE.STATE)
-                .subscribe(content -> {
-                    Platform.runLater(()->{
-                        if(contents.contains(content)) {
-                            return;
-                        }
-                        contents.removeIf(data ->
-                                Objects.equals(data.id, content.id));
-                        contents.add(content);
-                    });
-                });
         return contents;
     }
 
     public ObservableList<Content> star() {
-        service.star(true)
-                .filter(content -> content.state ==
-                        Content.ContentState.CONTENT_STATE_DELETE.STATE)
-                .subscribe(content -> {
-                    Platform.runLater(()->{
-                        if(stars.contains(content)) {
-                            return;
-                        }
-                        stars.removeIf(data ->
-                                Objects.equals(data.id, content.id));
-                        stars.add(content);
-                    });
-                });
         return stars;
     }
+
 
     public void star(String id, boolean star) {
         service.star(id, star)
@@ -97,5 +78,28 @@ public class ClipboardModel {
                 });
     }
 
+    @Override
+    public void accept(Content content) {
+        System.out.println(content);
+        remove(content);
+        add(content);
+    }
 
+    private void remove(Content content) {
+        Platform.runLater(()->{
+            contents.removeIf(item -> Objects.equals(item.id, content.id));
+            stars.removeIf(item -> Objects.equals(item.id, content.id));
+        });
+    }
+
+    private void add(Content content) {
+        if(content.state == Content.ContentState.CONTENT_STATE_NORMAL.STATE) {
+            Platform.runLater(()->{
+                contents.add(0, content);
+                if(content.star) {
+                    stars.add(0, content);
+                }
+            });
+        }
+    }
 }

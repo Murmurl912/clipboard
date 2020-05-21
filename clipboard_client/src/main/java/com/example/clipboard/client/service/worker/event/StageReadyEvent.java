@@ -1,4 +1,4 @@
-package com.example.clipboard.client.lifecycle.event;
+package com.example.clipboard.client.service.worker.event;
 
 import javafx.stage.Stage;
 import org.springframework.context.ApplicationEvent;

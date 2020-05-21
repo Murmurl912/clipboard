@@ -1,6 +1,7 @@
 package com.example.clipboard.client;
 
-import com.example.clipboard.client.lifecycle.event.StageReadyEvent;
+import com.example.clipboard.client.service.worker.event.AppStartEvent;
+import com.example.clipboard.client.service.worker.event.StageReadyEvent;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -23,6 +24,8 @@ public class FxApplication extends Application {
         this.applicationContext = new SpringApplicationBuilder()
                 .sources(ClipboardClientApplication.class)
                 .run(args);
+        applicationContext.publishEvent(new AppStartEvent(this));
+
     }
 
     @Override

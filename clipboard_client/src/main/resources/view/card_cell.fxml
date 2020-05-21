@@ -53,9 +53,7 @@
       <bottom>
          <HBox BorderPane.alignment="CENTER">
             <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
-               <graphic>
-                  <MaterialIconView glyphName="DEVICE" />
-               </graphic>
+
             </Label>
             <JFXButton fx:id="trash">
                <graphic>

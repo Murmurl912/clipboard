@@ -1,9 +1,7 @@
 package com.example.clipboard.client.service.worker;
 
-import com.example.clipboard.client.lifecycle.event.StartAgentEvent;
 import com.example.clipboard.client.service.worker.event.AgentEvent;
 import com.example.clipboard.client.service.worker.event.AgentStatusChangeEvent;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;

@@ -2,6 +2,7 @@ package com.example.clipboard.client.repository;
 
 import com.example.clipboard.client.repository.entity.Content;
 import com.example.clipboard.client.repository.model.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,16 +15,23 @@ public class RemoteContentRepository {
 
     private final WebClient client;
     private final String baseUrl = "http://localhost:8080";
-    private final String account = "test";
+    private String account = "test";
+    private String header = "";
+    private String token = "";
 
-    public RemoteContentRepository(WebClient.Builder builder) {
+    public RemoteContentRepository(WebClient.Builder builder,
+                                   AppRepository repository) {
         client = builder.baseUrl(baseUrl).build();
+
     }
 
-    public Mono<Content> version(String content) {
+
+    public Mono<Content> version(String content, String account, String token) {
         return client
-                .get().uri("/clipboard/account/{account}/content/{content}/version",
+                .get()
+                .uri("/clipboard/account/{account}/content/{content}/version",
                         account)
+                .header(header, token)
                 .retrieve().bodyToMono(Content.class);
     }
 

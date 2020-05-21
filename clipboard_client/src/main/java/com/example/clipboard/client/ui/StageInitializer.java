@@ -1,7 +1,6 @@
-package com.example.clipboard.client.lifecycle;
+package com.example.clipboard.client.ui;
 
-import com.example.clipboard.client.lifecycle.event.AppStartEvent;
-import com.example.clipboard.client.lifecycle.event.StageReadyEvent;
+import com.example.clipboard.client.service.worker.event.StageReadyEvent;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -10,7 +9,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -24,12 +22,8 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
     @Value("classpath:image/icon.png")
     private Resource icon;
 
-    private final ApplicationEventPublisher publisher;
-
-    public StageInitializer(ApplicationContext context,
-                            ApplicationEventPublisher publisher) {
+    public StageInitializer(ApplicationContext context) {
         this.context = context;
-        this.publisher = publisher;
     }
 
     @Override
@@ -51,7 +45,6 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
             stage.setScene(new Scene(loader.load()));
 
             stage.show();
-            publisher.publishEvent(new AppStartEvent(this));
         } catch (Exception e) {
             // ToDo: error handling
             throw new RuntimeException(e);

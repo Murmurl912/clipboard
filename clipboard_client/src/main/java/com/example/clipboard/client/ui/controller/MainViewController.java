@@ -1,15 +1,13 @@
 package com.example.clipboard.client.ui.controller;
 
-import com.example.clipboard.client.ui.model.ClipboardViewModel;
 import com.example.clipboard.client.repository.entity.Content;
-import com.example.clipboard.client.lifecycle.ApplicationInfo;
+import com.example.clipboard.client.ui.model.ClipboardModel;
 import com.example.clipboard.client.ui.view.CardCell;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXToolbar;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
-import io.reactivex.rxjava3.disposables.Disposable;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -49,39 +47,6 @@ public class MainViewController {
     public TextField searchEntry;
     public JFXButton search;
     public GridView<Content> container;
-
-    private final ListChangeListener<Content>
-            clipboardListener = change -> {
-        Platform.runLater(() -> {
-            container.getItems().clear();
-            container.getItems().addAll(change.getList());
-        });
-    };
-
-    private final ListChangeListener<Content>
-            starListener = change -> {
-        Platform.runLater(() -> {
-            container.getItems().clear();
-            container.getItems().addAll(change.getList());
-        });
-    };
-
-    private final ListChangeListener<Content>
-            archiveListener = change -> {
-        Platform.runLater(() -> {
-            container.getItems().clear();
-            container.getItems().addAll(change.getList());
-        });
-    };
-
-    private final ListChangeListener<Content>
-            recycleListener = change -> {
-        Platform.runLater(() -> {
-            container.getItems().clear();
-            container.getItems().addAll(change.getList());
-        });
-    };
-
     public StackPane root;
     public JFXButton clipboard;
     public JFXButton star;
@@ -110,8 +75,6 @@ public class MainViewController {
     private Resource cardCellView;
     @Value("classpath:view/content_details.fxml")
     private Resource contentDetailView;
-    private ClipboardViewModel clipboardViewModel;
-
 
     public MainViewController(ApplicationContext context) {
         this.context = context;
@@ -198,14 +161,6 @@ public class MainViewController {
     }
 
     private void view() {
-        signout.setOnMouseClicked(e -> {
-            ApplicationInfo info = context.getBean(ApplicationInfo.class);
-            if (info.isLogin.get()) {
-                navigate(MainViewState.VIEW_STATE_SIGN_OUT);
-            } else {
-                navigate(MainViewState.VIEW_STATE_SIGN_IN);
-            }
-        });
 
         account.setOnMouseClicked(e -> {
             navigate(MainViewState.VIEW_STATE_PROFILE);
@@ -246,7 +201,6 @@ public class MainViewController {
             throw new RuntimeException(e);
         }
     }
-
 
     private void navigate(MainViewState next) {
         if (transforming.get()) {
@@ -393,36 +347,29 @@ public class MainViewController {
         dialog.show();
     }
 
-    // todo refactor code
     private void toStar() {
         menuToggle.setText("Star");
-        if (clipboardViewModel == null) {
-            clipboardViewModel =
-                    context.getBean(ClipboardViewModel.class);
-        }
-        clearListener();
-        container.getItems().clear();
-        clipboardViewModel.getStar().addListener(starListener);
-        clipboardViewModel.refreshStar();
+        ClipboardModel model = context.getBean(ClipboardModel.class);
+        container.setItems(null);
+        container.setItems(model.star());
+        model.star().addListener((ListChangeListener<? super Content>) change -> {
+            System.out.println(Thread.currentThread());
+            System.out.println(change);
+        });
     }
 
-    // todo refactor code
     private void toClipboard() {
         menuToggle.setText("Clipboard");
-        if (clipboardViewModel == null) {
-            clipboardViewModel =
-                    context.getBean(ClipboardViewModel.class);
-        }
-        clearListener();
-        container.getItems().clear();
-        clipboardViewModel.getClipboard().addListener(clipboardListener);
-        clipboardViewModel.refreshClipboard();
+        ClipboardModel model = context.getBean(ClipboardModel.class);
+        container.setItems(null);
+        container.setItems(model.clipboard());
+        model.clipboard().addListener((ListChangeListener<? super Content>) change -> {
+            System.out.println(Thread.currentThread());
+            System.out.println(change);
+        });
+
     }
 
-    private void clearListener() {
-        clipboardViewModel.getStar().removeListener(starListener);
-        clipboardViewModel.getClipboard().removeListener(clipboardListener);
-    }
 
     private void setting() {
 
@@ -440,11 +387,13 @@ public class MainViewController {
         content = container.getItems().get(index);
         switch (Content.ContentState.get(content.state)) {
             case CONTENT_STATE_NORMAL:
-                if (clipboardViewModel == null) {
-                    clipboardViewModel =
-                            context.getBean(ClipboardViewModel.class);
-                }
-                clipboardViewModel.star(content.id, !content.star);
+//                if (clipboardViewModel == null) {
+//                    clipboardViewModel =
+//                            context.getBean(ClipboardViewModel.class);
+//                }
+//                clipboardViewModel.star(content.id, !content.star);
+                ClipboardModel model = context.getBean(ClipboardModel.class);
+                model.star(content.id, !content.star);
                 break;
             case CONTENT_STATE_DELETE:
             default:
@@ -456,12 +405,14 @@ public class MainViewController {
         content = container.getItems().get(index);
         switch (Content.ContentState.get(content.state)) {
             case CONTENT_STATE_NORMAL:
-                if (clipboardViewModel == null) {
-                    clipboardViewModel =
-                            context.getBean(ClipboardViewModel.class);
-                }
-                clipboardViewModel.state(content.id,
-                        Content.ContentState.CONTENT_STATE_DELETE);
+//                if (clipboardViewModel == null) {
+//                    clipboardViewModel =
+//                            context.getBean(ClipboardViewModel.class);
+//                }
+//                clipboardViewModel.state(content.id,
+//                        Content.ContentState.CONTENT_STATE_DELETE);
+                ClipboardModel model = context.getBean(ClipboardModel.class);
+                model.state(content.id, Content.ContentState.CONTENT_STATE_DELETE);
                 break;
             case CONTENT_STATE_DELETE:
                 throw new RuntimeException("Cannot recycle content: " + content);
@@ -500,13 +451,13 @@ public class MainViewController {
             ((FontAwesomeIconView) ((JFXButton) star).getGraphic()).setIcon(FontAwesomeIcon.STAR_ALT);
         }
 
-        // listener
-
         star.setOnMouseClicked(e -> {
             if (textArea.isEditable()) {
                 return;
             }
-            clipboardViewModel.star(data.id, !data.star);
+            ClipboardModel model = context.getBean(ClipboardModel.class);
+            model.star(data.id, !data.star);
+//            clipboardViewModel.star(data.id, !data.star);
         });
 
         edit.setOnMouseClicked(e -> {
@@ -556,7 +507,8 @@ public class MainViewController {
                 delete.setVisible(true);
                 delete.setManaged(true);
 
-                clipboardViewModel.text(data.id, textArea.getText());
+                ClipboardModel model = context.getBean(ClipboardModel.class);
+                model.star();
             }
         });
 
@@ -577,8 +529,8 @@ public class MainViewController {
 
             switch (Content.ContentState.get(data.state)) {
                 case CONTENT_STATE_NORMAL:
-                    clipboardViewModel.state(data.id,
-                            Content.ContentState.CONTENT_STATE_DELETE);
+                    ClipboardModel model = context.getBean(ClipboardModel.class);
+                    model.state(data.id, Content.ContentState.CONTENT_STATE_DELETE);
                     break;
                 case CONTENT_STATE_DELETE:
             }

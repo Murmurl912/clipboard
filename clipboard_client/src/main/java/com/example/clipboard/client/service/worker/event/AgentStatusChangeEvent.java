@@ -1,7 +1,5 @@
 package com.example.clipboard.client.service.worker.event;
 
-import com.example.clipboard.client.lifecycle.event.AppEvent;
-
 public class AgentStatusChangeEvent extends AppEvent {
     public AgentStatusChangeEvent(EventType type) {
         super(type);
