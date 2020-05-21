@@ -2,12 +2,14 @@ package com.example.clipboard.client.service;
 
 import com.example.clipboard.client.repository.CachedContentRepository;
 import com.example.clipboard.client.repository.entity.Content;
+import com.example.clipboard.client.repository.model.ContentModel;
 import com.example.clipboard.client.service.worker.ClipboardSyncEvent;
 import com.example.clipboard.client.service.worker.event.ClipboardEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.*;
 import reactor.core.scheduler.Schedulers;
 
@@ -17,6 +19,8 @@ import java.security.MessageDigest;
 import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
 public class ReactiveClipboardService implements ApplicationListener<ClipboardEvent> {
@@ -28,14 +32,19 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
     private final Flux<Content> publisher;
     private final int historyCount = 100;
     private ApplicationContext context;
-
+    private BlockingQueue<Content> contents;
+    private final WebClient client;
     public ReactiveClipboardService(CachedContentRepository cached,
                                     MessageDigest digest,
-                                    ApplicationContext context) {
+                                    ApplicationContext context,
+                                    WebClient.Builder builder) {
         EmitterProcessor<Content> clipboardProcessor = EmitterProcessor.create();
         this.cached = cached;
         this.digest = digest;
         this.context = context;
+        this.contents = new LinkedBlockingQueue<>();
+        client = builder.baseUrl("http://localhost:8080").build();
+
         processor = ReplayProcessor.create(historyCount);
         sink = processor.sink();
         publisher = processor.share();
@@ -63,9 +72,8 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 })
                 .map(cached::save)
                 .map(content -> {
-                    // handle create
-                    context.publishEvent(new ClipboardSyncEvent(content.id, content));
                     submit(content);
+                    contents.offer(content);
                     return content;
                 })
                 .subscribeOn(Schedulers.boundedElastic());
@@ -84,8 +92,8 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 })
                 .map(cached::save)
                 .map(content -> {
-                    context.publishEvent(new ClipboardSyncEvent(content.id, content));
                     submit(content);
+                    contents.offer(content);
                     return content;
                 })
                 .subscribeOn(Schedulers.boundedElastic());
@@ -136,8 +144,6 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
         switch (event.getType()) {
             case CLIPBOARD_CREATE:
                 break;
-            case CLIPBOARD_CHECK:
-                break;
             case CLIPBOARD_REPORT:
                 String content = (String)event.getPayloud().get("clipboard");
                 create(content).subscribe();
@@ -162,5 +168,39 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
         model.create = new Date();
         return model;
     }
+
+    public Mono<Content> create(ContentModel model, String account) {
+        return client
+                .post()
+                .uri("/clipboard/account/{account}/content", account)
+                .body(Mono.just(model), ContentModel.class)
+                .retrieve().bodyToMono(Content.class);
+    }
+
+    private void sync() {
+        while (true) {
+            try {
+                Content content = contents.take();
+                if(content.status == Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
+                    if(content.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
+                        cached.deleteById(content.uuid);
+                        return;
+                    }
+                    ContentModel model = new ContentModel();
+                    model.content = content.content;
+                    model.update = content.update;
+                    model.create = content.create;
+                    create(model, "test")
+                            .subscribe();
+                } else {
+
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
 
 }
