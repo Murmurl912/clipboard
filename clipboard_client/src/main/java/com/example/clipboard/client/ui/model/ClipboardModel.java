@@ -2,7 +2,7 @@ package com.example.clipboard.client.ui.model;
 
 import com.example.clipboard.client.repository.entity.Content;
 import com.example.clipboard.client.service.AppContext;
-import com.example.clipboard.client.service.ReactiveClipboardService;
+import com.example.clipboard.client.service.ClipboardService;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,10 +15,10 @@ import java.util.function.Consumer;
 public class ClipboardModel implements Consumer<Content> {
 
     private final ObservableList<Content> contents;
-    private final ReactiveClipboardService service;
+    private final ClipboardService service;
     private final AppContext appContext;
 
-    public ClipboardModel(ReactiveClipboardService service,
+    public ClipboardModel(ClipboardService service,
                           AppContext appContext) {
         this.service = service;
         this.appContext = appContext;
@@ -54,7 +54,7 @@ public class ClipboardModel implements Consumer<Content> {
 
     private void remove(Content content) {
         Platform.runLater(()->{
-            contents.removeIf(item -> Objects.equals(item.id, content.id));
+            contents.removeIf(item -> Objects.equals(item.id, content.id) || Objects.equals(item.uuid, content.uuid));
         });
     }
 

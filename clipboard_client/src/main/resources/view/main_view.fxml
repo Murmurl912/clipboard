@@ -35,9 +35,9 @@
          </left>
          <right>
             <HBox BorderPane.alignment="CENTER">
-               <JFXButton fx:id="layout" layoutX="10.0" layoutY="10.0" focusTraversable="false">
+               <JFXButton fx:id="refresh" layoutX="10.0" layoutY="10.0" focusTraversable="false">
                   <graphic>
-                     <FontAwesomeIconView glyphName="LIST"/>
+                     <FontAwesomeIconView glyphName="UNDO"/>
                   </graphic>
                </JFXButton>
             </HBox>

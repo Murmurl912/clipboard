@@ -50,12 +50,11 @@ public class MainViewController {
     public StackPane root;
     public JFXButton clipboard;
     public JFXButton account;
-    public JFXButton trash;
     public JFXButton signout;
     public JFXButton setting;
-    public JFXButton archive;
     public AtomicReference<MainViewState> stateAtomicReference = new AtomicReference<>(MainViewState.VIEW_STATE_DEFAULT);
     public AtomicBoolean transforming = new AtomicBoolean(false);
+    public JFXButton refresh;
     @Value("classpath:view/signin_dialog.fxml")
     private Resource signInView;
     @Value("classpath:view/signout_dialog.fxml")

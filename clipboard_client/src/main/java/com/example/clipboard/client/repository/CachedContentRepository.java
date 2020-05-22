@@ -18,4 +18,6 @@ public interface CachedContentRepository extends JpaRepository<Content, String> 
 
     Optional<Content> findContentByIdEquals(String id);
 
+    Long deleteContentByIdEquals(String id);
+
 }

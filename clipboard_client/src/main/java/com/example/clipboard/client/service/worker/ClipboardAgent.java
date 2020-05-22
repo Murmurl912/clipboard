@@ -1,5 +1,6 @@
 package com.example.clipboard.client.service.worker;
 
+import com.example.clipboard.client.service.AppContext;
 import com.example.clipboard.client.service.worker.event.AgentEvent;
 import com.example.clipboard.client.service.worker.event.AgentStatusChangeEvent;
 import com.example.clipboard.client.service.worker.event.ClipboardEvent;
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -31,21 +34,19 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
 
     private final ApplicationEventPublisher publisher;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private String baseUrl = "http://localhost:8080";
-    private String eventUrl = "/clipboard/account/{account}/event";
-    private String account = "test";
-    private long period = 1000;
     private final TaskScheduler scheduler;
     private ScheduledFuture<?> future;
     private Disposable disposable;
     private String content;
+    private final AppContext context;
 
     private final AtomicBoolean connectionAlive = new AtomicBoolean(false);
 
     public ClipboardAgent(ApplicationEventPublisher publisher,
-                          TaskScheduler scheduler) {
+                          TaskScheduler scheduler, AppContext context) {
         this.publisher = publisher;
         this.scheduler = scheduler;
+        this.context = context;
     }
 
     private void local() {
@@ -70,28 +71,23 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
 
     private Disposable cloud() {
         return disposable =
-                WebClient.create(baseUrl)
+                WebClient.create(context.baseUrl)
                         .get()
-                        .uri(eventUrl, account)
+                        .uri(context.eventUrl, context.account)
+                        .accept(MediaType.APPLICATION_STREAM_JSON)
                         .retrieve()
-                        .onStatus((status) -> true, new Function<ClientResponse, Mono<? extends Throwable>>() {
+                        .onStatus(HttpStatus::isError, new Function<ClientResponse, Mono<? extends Throwable>>() {
                             @Override
                             public Mono<? extends Throwable> apply(ClientResponse response) {
-
-                                if(response.statusCode().isError()) {
-                                    logger.info("Cloud Connection Error: " + response.statusCode());
-                                    connectionAlive.set(false);
-                                    publisher.publishEvent(new AgentStatusChangeEvent(AgentStatusChangeEvent.EventType.CONNECTION_LOST));
-                                } else {
-                                    logger.info("Cloud Connection Success: " + response.statusCode());
-                                    connectionAlive.set(true);
-                                    publisher.publishEvent(new AgentStatusChangeEvent(AgentStatusChangeEvent.EventType.CONNECTION_ALIVE));
-                                }
+                                logger.info("Cloud Connection Error: " + response.statusCode());
+                                connectionAlive.set(false);
+                                publisher.publishEvent(new AgentStatusChangeEvent(AgentStatusChangeEvent.EventType.CONNECTION_LOST));
                                 return null;
                             }
                         })
                         .bodyToFlux(ClipboardEventModel.class)
                         .map(model -> {
+                            connectionAlive.set(true);
                             logger.info("Receive Cloud Clipboard Event: " + model.toString());
                             return model;
                         })
@@ -104,7 +100,7 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
                             Map<String, Object> map = new HashMap<>();
                             map.put("event", model);
                             publisher.publishEvent(new ClipboardEvent(ClipboardEvent.EventSource.CLOUD_SOURCE,
-                                    ClipboardEvent.EventType.CLIPBOARD_CREATE, map));
+                                    ClipboardEvent.EventType.CLIPBOARD_SYNC_EVENT, map));
                         });
     }
 
@@ -167,7 +163,7 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
     private void startLocal() {
         if(future == null || future.isCancelled()) {
             logger.info("Star Local Clipboard Agent");
-            future = scheduler.scheduleAtFixedRate(this::local, period);
+            future = scheduler.scheduleAtFixedRate(this::local, context.period);
         } else {
             logger.info("Local Clipboard Agent Is Running, Ignore Start Agent Event");
         }

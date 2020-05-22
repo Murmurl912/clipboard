@@ -78,6 +78,7 @@ public class ClipboardService {
                        // not exist in current database
                        data.hash = hash(data.content.getBytes(StandardCharsets.UTF_8));
                        data.account = account;
+                       data.state = ContentState.CONTENT_STATE_NORMAL.STATE;
                        return repository.save(data);
                    } else {
                        if(content.update.after(data.update)) {

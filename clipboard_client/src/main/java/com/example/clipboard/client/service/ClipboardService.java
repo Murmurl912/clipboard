@@ -3,14 +3,12 @@ package com.example.clipboard.client.service;
 import com.example.clipboard.client.repository.CachedContentRepository;
 import com.example.clipboard.client.repository.entity.Content;
 import com.example.clipboard.client.repository.model.ContentModel;
+import com.example.clipboard.client.service.worker.ClipboardEventModel;
 import com.example.clipboard.client.service.worker.event.ClipboardEvent;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.lang.NonNull;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.*;
@@ -21,40 +19,32 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
-public class ReactiveClipboardService implements ApplicationListener<ClipboardEvent> {
+public class ClipboardService implements ApplicationListener<ClipboardEvent> {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CachedContentRepository cached;
     private final MessageDigest digest;
-    private final FluxProcessor<Content, Content> processor;
     private final FluxSink<Content> sink;
     private final Flux<Content> publisher;
-    private final int historyCount = 100;
-    private ApplicationContext context;
-    private BlockingQueue<Content> contents;
     private final WebClient client;
-    private TaskExecutor executor;
-    private boolean disable = true;
+    private final AppContext context;
 
-    public ReactiveClipboardService(CachedContentRepository cached,
-                                    MessageDigest digest,
-                                    ApplicationContext context,
-                                    WebClient.Builder builder,
-                                    @Qualifier("sync") TaskExecutor executor, TaskScheduler scheduler) {
+    public ClipboardService(CachedContentRepository cached,
+                            MessageDigest digest,
+                            AppContext context,
+                            WebClient.Builder builder) {
         EmitterProcessor<Content> clipboardProcessor = EmitterProcessor.create();
         this.cached = cached;
         this.digest = digest;
         this.context = context;
-        this.contents = new LinkedBlockingQueue<>();
-        client = builder.baseUrl("http://localhost:8080").build();
-        processor = ReplayProcessor.create(historyCount);
+        client = builder.baseUrl(context.baseUrl).build();
+        FluxProcessor<Content, Content> processor = ReplayProcessor.create(context.limit);
         sink = processor.sink();
         publisher = processor.share();
-        this.executor = executor;
     }
 
     public Mono<Content> create(String text) {
@@ -64,8 +54,9 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                     Content content = null;
                     if(optional.isEmpty()) {
                         String uuid = UUID.randomUUID().toString();
-                        content = createContent(text, uuid, null);
+                        content = createContent(text, uuid, context.account);
                         content.uuid = uuid;
+                        content.hash = hash(content.content);
                     } else {
                         content = optional.get();
                         if(Objects.equals(content.content, text)) {
@@ -80,8 +71,9 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 })
                 .map(cached::save)
                 .map(content -> {
+                    logger.info("Create Content: " + content);
                     submit(content);
-                    syncCreate(content, disable);
+                    syncCreate(content, context.auto);
                     return content;
                 })
                 .subscribeOn(Schedulers.boundedElastic());
@@ -94,22 +86,24 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 })
                 .cast(Content.class)
                 .map(content -> {
-                    content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
-                    content.update = new Date();
-                    content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
-                    return cached.save(content);
+                    if(content.status ==
+                            Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
+                        cached.deleteById(id);
+                    } else {
+                        content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
+                        content.update = new Date();
+                        content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
+                        content = cached.save(content);
+                    }
+                    return content;
+
                 })
                 .map(content -> {
+                    logger.info("Delete Content: " + content);
                     submit(content);
-                    syncDelete(content, disable);
+                    syncDelete(content, context.auto);
                     return content;
                 })
-                .subscribeOn(Schedulers.boundedElastic());
-    }
-
-    public Mono<Object> clear() {
-        return Mono
-                .fromRunnable(cached::deleteAll)
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
@@ -127,43 +121,19 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 .fromCallable(() -> cached.getContentsByStateEqualsOrderByUpdateDesc(
                         Content.ContentState.CONTENT_STATE_NORMAL.STATE))
                 .flatMapIterable((contents)->contents)
-                .map(c -> {
-                    if(c.status == Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
-                        contents.offer(c);
-                    }
-                    return c;
-                })
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
     public void refresh() {
-        gets("test").doOnError(e ->
-                e.printStackTrace()
-        ).subscribe(sink::next);
+        gets(context.account).doOnError(e ->
+                logger.error("Failed to refresh content: " + e)
+        ).subscribe(this::submit);
         clipboard().subscribe(sink::next);
     }
 
-    @Scheduled(fixedRate = 5000)
-    private void sync() {
-        if(disable) {
-            return;
-        }
+    private void syncDelete(Content content, boolean auto) {
 
-        try {
-            Content content = contents.take();
-            if(content.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
-                syncDelete(content, disable);
-            } else {
-                syncCreate(content, disable);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void syncDelete(Content content, boolean disable) {
-
-        if(disable) {
+        if(!auto) {
             return;
         }
 
@@ -176,14 +146,13 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                     return c;
                 })
                 .doOnError(e -> {
-                    contents.offer(content);
-                    e.printStackTrace();
+                    logger.error("Failed to delete content: " + e);
                 })
                 .subscribe(sink::next);
     }
 
-    private void syncCreate(Content content, boolean disable) {
-        if(disable) {
+    private void syncCreate(Content content, boolean auto) {
+        if(!auto) {
             return;
         }
         ContentModel model = new ContentModel();
@@ -192,6 +161,8 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
         model.content = content.content;
         create(model, content.account)
                 .map(c -> {
+                    // save to local
+
                     c.uuid = content.uuid;
                     c.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
                     if(c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
@@ -201,10 +172,8 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                         return cached.save(c);
                     }
                 })
-                .retry(3)
                 .doOnError(e -> {
-                    contents.offer(content);
-                    e.printStackTrace();
+                    logger.error("Failed to create content: " + e);
                 })
                 .subscribe(sink::next);
     }
@@ -212,7 +181,46 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
     @Override
     public void onApplicationEvent(ClipboardEvent event) {
         switch (event.getType()) {
-            case CLIPBOARD_CREATE:
+            case CLIPBOARD_SYNC_EVENT:
+                ClipboardEventModel model = (ClipboardEventModel) event.getPayloud().get("event");
+                Optional<Content> contentOptional = cached.findContentByIdEquals(model.id);
+
+                if(model.type == ClipboardEventModel.ClipboardContentEventType.CONTENT_STATE_EVENT.EVENT) {
+                    if(contentOptional.isPresent()) {
+                        Content content = contentOptional.get();
+                        cached.deleteById(content.uuid);
+                        content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
+                        content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
+                        sink.next(content);
+                    }
+                    break;
+                }
+
+                if(contentOptional.isEmpty()) {
+                    // no id found
+                    get(model.source, model.id)
+                            .map(content -> {
+                                content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
+                                return content;
+                            })
+                            .map(this::save).subscribe(sink::next);
+                    break;
+                }
+                Content local = contentOptional.get();
+                if(local.update.equals(model.version)) {
+                    // no need update
+                    break;
+                }
+
+                // save to local
+                get(model.source, model.id)
+                        .map(content -> {
+                            content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
+                            return content;
+                        })
+                        .map(this::save)
+                        .subscribe(sink::next);
+
                 break;
             case CLIPBOARD_REPORT:
                 String content = (String)event.getPayloud().get("clipboard");
@@ -261,4 +269,32 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 .retrieve().bodyToFlux(Content.class);
     }
 
+    public Mono<Content> get(String account, String id) {
+        return client
+                .get()
+                .uri("/clipboard/account/{account}/content/{content}", account, id)
+                .retrieve().bodyToMono(Content.class);
+    }
+
+    private Content save(Content content) {
+        Optional<Content> optionalContent =
+                cached.findContentByHashEquals(content.hash);
+        if(optionalContent.isEmpty()) {
+            // no hash equal find
+            content.uuid = UUID.randomUUID().toString();
+            return cached.save(content);
+        }
+
+        Content local = optionalContent.get();
+
+        if(local.content.equals(content.content)) {
+            // identical found
+            content.uuid = local.uuid;
+            return cached.save(content);
+        }
+
+        // not found in local
+        content.uuid = UUID.randomUUID().toString();
+        return cached.save(content);
+    }
 }

@@ -45,7 +45,11 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
         appContext.username = app.username;
         appContext.email = app.email;
         appContext.token = app.token;
+        appContext.auto = true;
+        appContext.baseUrl = "http://localhost:8080";
+        appContext.period = 1000L;
 
+        appContext.account = "test";
         if(StringUtils.isEmpty(app.account)) {
 //            visitor();
             context.publishEvent(new AgentEvent(this, AgentEvent.AgentEventType.START_ALL));
