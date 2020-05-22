@@ -3,11 +3,15 @@ package com.example.clipboard.client.service;
 import com.example.clipboard.client.repository.CachedContentRepository;
 import com.example.clipboard.client.repository.entity.Content;
 import com.example.clipboard.client.repository.model.ContentModel;
-import com.example.clipboard.client.service.worker.ClipboardSyncEvent;
 import com.example.clipboard.client.service.worker.event.ClipboardEvent;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.lang.NonNull;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.*;
@@ -34,20 +38,22 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
     private ApplicationContext context;
     private BlockingQueue<Content> contents;
     private final WebClient client;
+    private TaskExecutor executor;
     public ReactiveClipboardService(CachedContentRepository cached,
                                     MessageDigest digest,
                                     ApplicationContext context,
-                                    WebClient.Builder builder) {
+                                    WebClient.Builder builder,
+                                    @Qualifier("sync") TaskExecutor executor, TaskScheduler scheduler) {
         EmitterProcessor<Content> clipboardProcessor = EmitterProcessor.create();
         this.cached = cached;
         this.digest = digest;
         this.context = context;
         this.contents = new LinkedBlockingQueue<>();
         client = builder.baseUrl("http://localhost:8080").build();
-
         processor = ReplayProcessor.create(historyCount);
         sink = processor.sink();
         publisher = processor.share();
+        this.executor = executor;
     }
 
     public Mono<Content> create(String text) {
@@ -116,26 +122,21 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
     protected Flux<Content> clipboard() {
 
         return Mono
-                .fromCallable(() -> {
-                    return cached.getContentsByStateEqualsOrderByUpdateDesc(
-                            Content.ContentState.CONTENT_STATE_NORMAL.STATE);
-                })
+                .fromCallable(() -> cached.getContentsByStateEqualsOrderByUpdateDesc(
+                        Content.ContentState.CONTENT_STATE_NORMAL.STATE))
                 .map(list -> {
                     System.out.println(list);
                     return list;
                 })
                 .flatMapIterable((contents)->contents)
                 .map(c -> {
-                    // handle history
-                    if(c.status == Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
-                        context.publishEvent(new ClipboardSyncEvent(c.id, c));
-                    }
                     return c;
                 })
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
     public void refresh() {
+        gets("test").subscribe(sink::next);
         clipboard().subscribe(sink::next);
     }
 
@@ -163,11 +164,11 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
         model.content = text;
         model.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
         model.create = model.update = new Date();
-        model.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
         model.update = new Date();
         model.create = new Date();
         return model;
     }
+
 
     public Mono<Content> create(ContentModel model, String account) {
         return client
@@ -177,30 +178,18 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 .retrieve().bodyToMono(Content.class);
     }
 
-    private void sync() {
-        while (true) {
-            try {
-                Content content = contents.take();
-                if(content.status == Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
-                    if(content.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
-                        cached.deleteById(content.uuid);
-                        return;
-                    }
-                    ContentModel model = new ContentModel();
-                    model.content = content.content;
-                    model.update = content.update;
-                    model.create = content.create;
-                    create(model, "test")
-                            .subscribe();
-                } else {
-
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        }
+    public Mono<Content> delete(String id, String account) {
+        return client
+                .delete()
+                .uri("/clipboard/account/{account}/content/{content}", account, id)
+                .retrieve().bodyToMono(Content.class);
     }
 
+    public Flux<Content> gets(String account) {
+        return client
+                .get()
+                .uri("/clipboard/account/{account}/contents", account)
+                .retrieve().bodyToFlux(Content.class);
+    }
 
 }

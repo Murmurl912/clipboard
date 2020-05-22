@@ -6,7 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
 import java.security.MessageDigest;
@@ -25,5 +27,10 @@ public class ClipboardClientApplication {
     @Bean("SHA1")
     MessageDigest digest() throws NoSuchAlgorithmException {
         return MessageDigest.getInstance("SHA1");
+    }
+
+    @Bean("sync")
+    TaskExecutor executor() {
+        return new ThreadPoolTaskExecutor();
     }
 }

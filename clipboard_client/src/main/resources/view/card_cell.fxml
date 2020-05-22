@@ -52,6 +52,11 @@
       </top>
       <bottom>
          <HBox BorderPane.alignment="CENTER">
+            <JFXButton fx:id="sync">
+               <graphic>
+                  <FontAwesomeIconView glyphName="CLOUD" />
+               </graphic>
+            </JFXButton>
             <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
 
             </Label>

@@ -6,9 +6,8 @@ public class Record {
     public Integer operation;
 
     public static enum Operation {
-        OPERATION_CREATE(0),
-        OPERATION_UPDATE(1),
-        OPERATION_DELETE(2);
+        OPERATION_UPDATE(0),
+        OPERATION_DELETE(1);
         public int OPERATION;
         Operation(int operation) {
             this.OPERATION = operation;
