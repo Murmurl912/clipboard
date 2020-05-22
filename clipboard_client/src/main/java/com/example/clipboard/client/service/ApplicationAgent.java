@@ -2,9 +2,7 @@ package com.example.clipboard.client.service;
 
 import com.example.clipboard.client.repository.AppRepository;
 import com.example.clipboard.client.repository.entity.App;
-import com.example.clipboard.client.service.worker.event.AgentEvent;
-import com.example.clipboard.client.service.worker.event.AppEvent;
-import com.example.clipboard.client.service.worker.event.AppStartEvent;
+import com.example.clipboard.client.service.worker.event.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
@@ -29,6 +27,20 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
         if(event instanceof AppStartEvent) {
             // init
             init();
+        } else if(event instanceof AccountLoginEvent) {
+            appContext.auto = true;
+            App app = new App();
+            app.id = appContext.id;
+            app.username = appContext.username;
+            app.email = appContext.email;
+            app.account = appContext.account;
+            app.token = appContext.token;
+            context.getBean(AppRepository.class)
+                    .save(app);
+            user();
+        } else if(event instanceof AccountLogoutEvent) {
+            context.publishEvent(new AgentEvent(this, AgentEvent.AgentEventType.STOP_CLOUD_AGENT));
+            appContext.auto = false;
         }
     }
 
@@ -41,21 +53,17 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
         App app = load();
         appContext.id = app.id;
         appContext.account = app.account;
-        appContext.avatar = app.avatar;
         appContext.username = app.username;
         appContext.email = app.email;
         appContext.token = app.token;
-        appContext.auto = true;
         appContext.baseUrl = "http://localhost:8080";
         appContext.period = 1000L;
-
-        appContext.account = "test";
+        appContext.limit = 100;
         if(StringUtils.isEmpty(app.account)) {
-//            visitor();
-            context.publishEvent(new AgentEvent(this, AgentEvent.AgentEventType.START_ALL));
-
+            visitor();
         } else {
-//            user();
+            appContext.auto = true;
+            user();
         }
 
     }

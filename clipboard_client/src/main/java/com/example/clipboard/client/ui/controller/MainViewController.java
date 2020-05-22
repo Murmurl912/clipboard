@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -87,7 +88,7 @@ public class MainViewController {
     private void initialize() {
 
         container.setVerticalCellSpacing(20);
-        container.setHorizontalCellSpacing(0);
+        container.setHorizontalCellSpacing(10);
         container.setCellFactory(factory -> new CardCell(
                 cell -> {
                     try {
@@ -135,6 +136,15 @@ public class MainViewController {
                         return;
                     }
 
+                    if(cell.getBefore() == null) {
+                        cell.setBefore(content);
+                    } else {
+                        Content c = cell.getBefore();
+                        if(Objects.equals(c, content)) {
+                            return;
+                        }
+                    }
+
                     if(content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
                         ((MaterialIconView)((JFXButton)cell.getHolder().get("cloud")).getGraphic())
                                 .setIcon(MaterialIcon.CLOUD_DONE);
@@ -150,12 +160,13 @@ public class MainViewController {
                             .setText(DateFormat.getTimeInstance().format(content.update));
                     ((Label) cell.getHolder().get("date"))
                             .setText(DateFormat.getDateInstance().format(content.update));
+                    cell.setBefore(content);
                 }));
         container.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number old, Number now) {
                 double max = now.doubleValue();
-                container.setCellWidth(max);
+                container.setCellWidth(max - 20);
             }
         });
         view();

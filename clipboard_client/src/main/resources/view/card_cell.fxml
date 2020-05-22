@@ -10,56 +10,50 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-
-<HBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
-   <JFXToolbar fx:id="container" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #fafafa;" HBox.hgrow="ALWAYS">
-      <center>
-         <VBox BorderPane.alignment="CENTER">
-            <Label fx:id="content" alignment="TOP_LEFT" layoutX="10.0" layoutY="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="34.0" wrapText="true" VBox.vgrow="ALWAYS">
-            </Label>
-         </VBox>
-      </center>
-      <padding>
-         <Insets left="5.0" right="5.0" />
-      </padding>
-      <top>
-         <HBox BorderPane.alignment="CENTER">
-            <Label fx:id="time" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
-               <graphic>
-                  <MaterialIconView glyphName="QUERY_BUILDER" size="18" />
-               </graphic>
-               <padding>
-                  <Insets right="20.0" />
-               </padding>
-            </Label>
-            <JFXButton fx:id="cloud" focusTraversable="false">
-               <graphic>
-                  <MaterialIconView glyphName="CLOUD" size="18" />
-               </graphic>
-            </JFXButton>
-            <JFXButton fx:id="copy" layoutX="84.0" layoutY="10.0" focusTraversable="false">
-               <graphic>
-                  <MaterialIconView glyphName="CONTENT_COPY" size="18" />
-               </graphic>
-            </JFXButton>
-         </HBox>
-      </top>
-      <bottom>
-         <HBox BorderPane.alignment="CENTER">
-            <Label fx:id="date" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
-               <graphic>
-                  <MaterialIconView glyphName="TODAY" size="18" />
-               </graphic>
-            </Label>
-            <JFXButton fx:id="trash" focusTraversable="false">
-               <graphic>
-                  <FontAwesomeIconView glyphName="TRASH" size="18" />
-               </graphic>
-            </JFXButton>
-         </HBox>
-      </bottom>
-      <HBox.margin>
-         <Insets left="10" right="10" />
-      </HBox.margin>
-   </JFXToolbar>
-</HBox>
+<JFXToolbar xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+            fx:id="container" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+            style="-fx-background-color: #fafafa;" HBox.hgrow="ALWAYS">
+   <center>
+      <Label fx:id="content" alignment="TOP_LEFT" layoutX="10.0" layoutY="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="34.0" wrapText="true" VBox.vgrow="ALWAYS">
+      </Label>
+   </center>
+   <padding>
+      <Insets left="5.0" right="5.0" />
+   </padding>
+   <top>
+      <HBox BorderPane.alignment="CENTER">
+         <Label fx:id="time" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+            <graphic>
+               <MaterialIconView glyphName="QUERY_BUILDER" size="18" />
+            </graphic>
+            <padding>
+               <Insets right="20.0" />
+            </padding>
+         </Label>
+         <JFXButton fx:id="cloud" focusTraversable="false">
+            <graphic>
+               <MaterialIconView glyphName="CLOUD" size="18" />
+            </graphic>
+         </JFXButton>
+         <JFXButton fx:id="copy" layoutX="84.0" layoutY="10.0" focusTraversable="false">
+            <graphic>
+               <MaterialIconView glyphName="CONTENT_COPY" size="18" />
+            </graphic>
+         </JFXButton>
+      </HBox>
+   </top>
+   <bottom>
+      <HBox BorderPane.alignment="CENTER">
+         <Label fx:id="date" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+            <graphic>
+               <MaterialIconView glyphName="TODAY" size="18" />
+            </graphic>
+         </Label>
+         <JFXButton fx:id="trash" focusTraversable="false">
+            <graphic>
+               <FontAwesomeIconView glyphName="TRASH" size="18" />
+            </graphic>
+         </JFXButton>
+      </HBox>
+   </bottom>
+</JFXToolbar>

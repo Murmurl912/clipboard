@@ -129,9 +129,18 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
     }
 
     public void refresh() {
-        gets(context.account).doOnError(e ->
-                logger.error("Failed to refresh content: " + e)
-        ).subscribe(this::submit);
+        if(context.auto) {
+            gets(context.account)
+                    .doOnError(e ->
+                            logger.error("Failed to refresh content: " + e)
+                    )
+                    .map(content -> {
+                        content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
+                        return content;
+                    })
+                    .map(this::save)
+                    .subscribe(this::submit);
+        }
         clipboard().subscribe(sink::next);
     }
 
@@ -141,7 +150,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
             return;
         }
 
-        delete(content.id, content.account, content.update)
+        delete(content.id, context.account, content.update)
                 .map(c -> {
                     c.uuid = content.uuid;
                     if(c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
@@ -159,11 +168,12 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
         if(!auto) {
             return;
         }
+
         ContentModel model = new ContentModel();
         model.update = content.update;
         model.create = content.create;
         model.content = content.content;
-        create(model, content.account)
+        create(model, context.account)
                 .map(c -> {
                     // save to local
 

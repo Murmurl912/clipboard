@@ -28,6 +28,7 @@ public class CardCell extends GridCell<Content> {
     private final Map<String, Node> holder = new HashMap<>();
     private ViewReadyCallback viewReadyCallback;
     private ViewUpdateCallback viewUpdateCallback;
+    private Content before;
 
     public CardCell() {
 
@@ -45,6 +46,14 @@ public class CardCell extends GridCell<Content> {
                     ViewUpdateCallback updateCallback) {
         this.viewUpdateCallback = updateCallback;
         this.viewReadyCallback = readyCallback;
+    }
+
+    public void setBefore(Content before) {
+        this.before = before;
+    }
+
+    public Content getBefore() {
+        return before;
     }
 
     @PostConstruct

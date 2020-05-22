@@ -13,6 +13,4 @@ public class App {
     public String account;
     public String token;
     public String email;
-    public String avatar;
-
 }

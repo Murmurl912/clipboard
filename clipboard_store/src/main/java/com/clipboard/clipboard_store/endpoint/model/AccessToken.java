@@ -1,14 +1,14 @@
-package com.example.clipboard.client.repository.entity;
+package com.clipboard.clipboard_store.endpoint.model;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.Date;
 
+@Document("access_token")
 public class AccessToken {
     public String id;
     public String account;
-    public String salt;
     public Date create;
     public Date expire;
     public String key;
