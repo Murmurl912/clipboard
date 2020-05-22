@@ -2,8 +2,7 @@
 
 <?import com.jfoenix.controls.JFXButton?>
 <?import com.jfoenix.controls.JFXToolbar?>
-<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
-<?import de.jensd.fx.glyphs.materialicons.MaterialIconView?>
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
@@ -12,77 +11,38 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<?import java.net.URL?>
-<HBox  prefWidth="400.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<?import javafx.scene.control.ScrollPane?>
+<HBox prefWidth="450" prefHeight="300" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <stylesheets>
       <URL value="@/style/main.css" />
    </stylesheets>
    <JFXToolbar fx:id="container" style="-fx-background-color: #fafafa;" HBox.hgrow="ALWAYS">
       <center>
          <VBox BorderPane.alignment="CENTER">
-            <TextArea fx:id="content" wrapText="true" VBox.vgrow="ALWAYS" focusTraversable="false">
+            <padding>
+               <Insets top="10" left="10" right="10"/>
+            </padding>
+            <Label fx:id="content" wrapText="true" VBox.vgrow="ALWAYS">
                <VBox.margin>
                   <Insets bottom="10.0" />
-               </VBox.margin></TextArea>
+               </VBox.margin>
+            </Label>
          </VBox>
       </center>
       <padding>
          <Insets left="5.0" right="5.0" />
       </padding>
-      <top>
-         <HBox BorderPane.alignment="CENTER">
-            <Label fx:id="time" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
-               <font>
-                  <Font name="System Bold" size="14.0" />
-               </font>
-               <graphic>
-                  <MaterialIconView glyphName="QUERY_BUILDER" />
-               </graphic>
-               <padding>
-                  <Insets right="40.0" />
-               </padding>
-            </Label>
-            <JFXButton fx:id="star">
-               <graphic>
-                  <FontAwesomeIconView fx:id="starIcon" glyphName="STAR" />
-               </graphic>
-            </JFXButton>
-            <JFXButton fx:id="copy" layoutX="118.0" layoutY="10.0" >
-               <graphic>
-                  <FontAwesomeIconView glyphName="COPY" />
-               </graphic>
-            </JFXButton>
-            <JFXButton fx:id="delete" layoutX="230.0" layoutY="10.0">
-               <graphic>
-                  <FontAwesomeIconView glyphName="TRASH" />
-               </graphic>
-            </JFXButton>
-            <JFXButton fx:id="cancel">
-               <graphic>
-                  <FontAwesomeIconView glyphName="TIMES" />
-               </graphic>
-            </JFXButton>
-         </HBox>
-      </top>
       <HBox.margin>
          <Insets />
       </HBox.margin>
       <bottom>
          <HBox BorderPane.alignment="CENTER">
-            <Label fx:id="device" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
-               <graphic>
-                  <MaterialIconView fx:id="deviceIcon" />
-               </graphic>
-            </Label>
-            <JFXButton fx:id="edit" text="Edit">
-               <graphic>
-                  <FontAwesomeIconView glyphName="EDIT" />
-               </graphic>
+            <JFXButton focusTraversable="false" layoutX="10.0" layoutY="10.0" text="Delete" fx:id="delete">
             </JFXButton>
-            <JFXButton fx:id="ok" layoutX="349.0" layoutY="10.0">
-               <graphic>
-                  <FontAwesomeIconView glyphName="CHECK"/>
-               </graphic>
+            <Label wrapText="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+            <JFXButton focusTraversable="false" layoutX="356.0" layoutY="10.0" text="Copy" fx:id="copy">
+            </JFXButton>
+            <JFXButton focusTraversable="false" text="Close" fx:id="close">
             </JFXButton>
          </HBox>
       </bottom>

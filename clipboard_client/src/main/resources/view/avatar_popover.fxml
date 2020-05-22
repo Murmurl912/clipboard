@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+    <HBox>
+        <padding>
+            <Insets bottom="10.0" />
+        </padding>
+        <JFXButton fx:id="avatar" focusTraversable="false" style="-fx-background-radius: 20px; -fx-background-color: lightgray">
+            <graphic>
+                <FontAwesomeIconView glyphName="USER" size="18" />
+            </graphic>
+        </JFXButton>
+        <JFXButton fx:id="username" alignment="TOP_LEFT" focusTraversable="false" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+    </HBox>
+    <Separator prefWidth="200.0" />
+    <JFXButton fx:id="sign" alignment="TOP_LEFT" focusTraversable="false" layoutX="10.0" layoutY="10.0" maxWidth="1.7976931348623157E308" text="Sign In" VBox.vgrow="NEVER">
+        <graphic>
+          <FontAwesomeIconView glyphName="SIGN_IN" size="18" />
+        </graphic>
+      <padding>
+         <Insets top="10.0" />
+      </padding>
+    </JFXButton>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+</VBox>

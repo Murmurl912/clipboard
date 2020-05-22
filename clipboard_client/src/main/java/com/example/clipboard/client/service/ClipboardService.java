@@ -111,6 +111,10 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
         return publisher;
     }
 
+    public void upload(Content content) {
+        syncCreate(content, true);
+    }
+
     protected void submit(Content content) {
         sink.next(content);
     }

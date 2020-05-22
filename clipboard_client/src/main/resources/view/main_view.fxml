@@ -15,8 +15,9 @@
 <?import javafx.scene.layout.StackPane?>
 <?import de.jensd.fx.glyphs.materialicons.MaterialIconView?>
 <?import java.net.URL?>
-<StackPane maxHeight="-Infinity" maxWidth="600" minHeight="-Infinity" minWidth="400" prefHeight="400.0"
-           prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+<?import javafx.scene.text.Font?>
+<StackPane prefHeight="600.0"
+           prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.example.clipboard.client.ui.controller.MainViewController"
            fx:id="root"
 >
@@ -27,27 +28,38 @@
    <VBox>
       <JFXToolbar style="-fx-background-color: #fafafa;">
          <left>
-            <JFXButton fx:id="menuToggle" BorderPane.alignment="CENTER" focusTraversable="false">
-               <graphic>
-                  <FontAwesomeIconView glyphName="BARS"/>
-               </graphic>
-            </JFXButton>
+            <HBox BorderPane.alignment="CENTER">
+               <JFXButton style="-fx-background-radius: 20px; -fx-background-color: lightgray" fx:id="avatar" BorderPane.alignment="CENTER" focusTraversable="false">
+                  <graphic>
+                     <FontAwesomeIconView glyphName="USER" size="18"/>
+                  </graphic>
+               </JFXButton>
+               <JFXButton fx:id="user" BorderPane.alignment="CENTER" focusTraversable="false">
+               </JFXButton>
+            </HBox>
+
          </left>
          <right>
             <HBox BorderPane.alignment="CENTER">
                <JFXButton fx:id="refresh" layoutX="10.0" layoutY="10.0" focusTraversable="false">
                   <graphic>
-                     <FontAwesomeIconView glyphName="UNDO"/>
+                     <FontAwesomeIconView glyphName="UNDO" size="18"/>
                   </graphic>
                </JFXButton>
             </HBox>
          </right>
          <center>
             <HBox BorderPane.alignment="CENTER">
-               <TextField HBox.hgrow="ALWAYS" focusTraversable="false" fx:id="searchEntry"/>
-               <JFXButton fx:id="search">
+               <TextField HBox.hgrow="ALWAYS" focusTraversable="false" fx:id="searchEntry">
+               </TextField>
+               <JFXButton focusTraversable="false" fx:id="search">
                   <graphic>
-                     <FontAwesomeIconView glyphName="SEARCH"/>
+                     <FontAwesomeIconView glyphName="SEARCH" size="18"/>
+                  </graphic>
+               </JFXButton>
+               <JFXButton focusTraversable="false" fx:id="clear">
+                  <graphic>
+                     <FontAwesomeIconView glyphName="TIMES" size="18"/>
                   </graphic>
                </JFXButton>
             </HBox>
@@ -60,52 +72,6 @@
          </padding>
       </JFXToolbar>
       <HBox VBox.vgrow="ALWAYS">
-
-         <JFXToolbar style="-fx-background-color: #fafafa;" fx:id="menu">
-            <center>
-               <VBox BorderPane.alignment="CENTER">
-                  <JFXButton focusTraversable="false"
-                             alignment="TOP_LEFT"
-                             maxWidth="1.7976931348623157E308"
-                             text="Clipboard"
-                             fx:id="clipboard">
-                     <graphic>
-                        <FontAwesomeIconView glyphName="CLIPBOARD"/>
-                     </graphic>
-                  </JFXButton>
-                  <JFXButton focusTraversable="false"
-                             alignment="TOP_LEFT" layoutX="10.0" layoutY="10.0" maxWidth="1.7976931348623157E308" fx:id="star"
-                             text="Star">
-                     <graphic>
-                        <FontAwesomeIconView glyphName="STAR"/>
-                     </graphic>
-                  </JFXButton>
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS"/>
-                  <JFXButton focusTraversable="false" alignment="TOP_LEFT" layoutX="10.0" layoutY="62.0" maxWidth="1.7976931348623157E308"
-                             text="Account" fx:id="account">
-                     <graphic>
-                        <FontAwesomeIconView glyphName="USER"/>
-                     </graphic>
-                  </JFXButton>
-                  <JFXButton focusTraversable="false" alignment="TOP_LEFT" layoutX="10.0" layoutY="88.0" maxWidth="1.7976931348623157E308"
-                             text="Setting" fx:id="setting">
-                     <graphic>
-                        <FontAwesomeIconView glyphName="COG"/>
-                     </graphic>
-                  </JFXButton>
-                  <JFXButton focusTraversable="false" alignment="TOP_LEFT" layoutX="10.0" layoutY="114.0" maxWidth="1.7976931348623157E308"
-                             text="Signout" fx:id="signout">
-                     <graphic>
-                        <FontAwesomeIconView glyphName="SIGN_OUT"/>
-                     </graphic>
-                  </JFXButton>
-               </VBox>
-            </center>
-            <HBox.margin>
-               <Insets top="10" left="10" bottom="10"/>
-            </HBox.margin>
-         </JFXToolbar>
-
          <GridView fx:id="container"  maxWidth="1.7976931348623157E308"
                    maxHeight="1.7976931348623157E308" HBox.hgrow="ALWAYS">
             <HBox.margin>

@@ -6,8 +6,8 @@ import com.example.clipboard.client.ui.view.CardCell;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXToolbar;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import de.jensd.fx.glyphs.materialicons.MaterialIcon;
+import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -24,6 +24,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.controlsfx.control.GridView;
+import org.controlsfx.control.PopOver;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -42,19 +43,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MainViewController {
     public final ApplicationContext context;
     public JFXToolbar menu;
-    public JFXButton menuToggle;
     public JFXButton layout;
     public TextField searchEntry;
     public JFXButton search;
     public GridView<Content> container;
     public StackPane root;
     public JFXButton clipboard;
-    public JFXButton account;
-    public JFXButton signout;
-    public JFXButton setting;
     public AtomicReference<MainViewState> stateAtomicReference = new AtomicReference<>(MainViewState.VIEW_STATE_DEFAULT);
     public AtomicBoolean transforming = new AtomicBoolean(false);
     public JFXButton refresh;
+    public JFXButton user;
+    public JFXButton avatar;
+    public JFXButton clear;
     @Value("classpath:view/signin_dialog.fxml")
     private Resource signInView;
     @Value("classpath:view/signout_dialog.fxml")
@@ -73,6 +73,11 @@ public class MainViewController {
     private Resource cardCellView;
     @Value("classpath:view/content_details.fxml")
     private Resource contentDetailView;
+    @Value(("classpath:view/avatar_popover.fxml"))
+    private Resource avatarPopOverView;
+
+    private PopOver avatarPopOver;
+    private PopOver contentDetailsPopOver;
 
     public MainViewController(ApplicationContext context) {
         this.context = context;
@@ -81,7 +86,7 @@ public class MainViewController {
     @FXML
     private void initialize() {
 
-        container.setVerticalCellSpacing(10);
+        container.setVerticalCellSpacing(20);
         container.setHorizontalCellSpacing(0);
         container.setCellFactory(factory -> new CardCell(
                 cell -> {
@@ -91,16 +96,21 @@ public class MainViewController {
                         Node node = loader.load();
                         cell.setGraphic(node);
                         cell.getHolder().put("node", node);
-                        cell.getHolder().put("title", node.lookup("#title"));
                         cell.getHolder().put("content", node.lookup("#content"));
                         cell.getHolder().put("time", node.lookup("#time"));
+                        cell.getHolder().put("date", node.lookup("#date"));
+                        Node cloud = node.lookup("#cloud");
+                        cell.getHolder().put("cloud", cloud);
                         Node delete = node.lookup("#trash");
                         cell.getHolder().put("delete", delete);
                         Node copy = node.lookup("#copy");
                         cell.getHolder().put("copy", copy);
                         Node container = node.lookup("#container");
-                        Node restore = node.lookup("#restore");
-                        cell.getHolder().put("restore", restore);
+
+                        cloud.setOnMouseClicked(e -> {
+                            cloud(cell.getIndex(), cell.getItem());
+                        });
+
                         copy.setOnMouseClicked(e -> {
                             copy(cell.getIndex(), cell.getItem());
                         });
@@ -109,9 +119,10 @@ public class MainViewController {
                             delete(cell.getIndex(), cell.getItem());
                         });
 
+
                         container.setOnMouseClicked(e -> {
                             if (e.getClickCount() == 2) {
-                                details(cell.getIndex(), cell.getItem());
+                                details(container, cell.getIndex(), cell.getItem());
                             }
                         });
 
@@ -124,15 +135,21 @@ public class MainViewController {
                         return;
                     }
 
-                    Node star = cell.getHolder().get("star");
-                    Node copy = cell.getHolder().get("copy");
-                    Node restore = cell.getHolder().get("restore");
-                    Node delete = cell.getHolder().get("delete");
+                    if(content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
+                        ((MaterialIconView)((JFXButton)cell.getHolder().get("cloud")).getGraphic())
+                                .setIcon(MaterialIcon.CLOUD_DONE);
+                    } else {
+                        ((MaterialIconView)((JFXButton)cell.getHolder().get("cloud")).getGraphic())
+                                .setIcon(MaterialIcon.CLOUD_OFF);
+                    }
+
                     Node label = cell.getHolder().get("content");
                     ((Label) label).setText(content.content);
 
                     ((Label) cell.getHolder().get("time"))
-                            .setText(DateFormat.getDateTimeInstance().format(content.update));
+                            .setText(DateFormat.getTimeInstance().format(content.update));
+                    ((Label) cell.getHolder().get("date"))
+                            .setText(DateFormat.getDateInstance().format(content.update));
                 }));
         container.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
@@ -146,20 +163,30 @@ public class MainViewController {
     }
 
     private void view() {
-
-        account.setOnMouseClicked(e -> {
-            navigate(MainViewState.VIEW_STATE_PROFILE);
+        refresh.setOnMouseClicked(e -> {
+            refresh();
         });
+        avatar.setOnMouseClicked(e -> {
+            if(avatarPopOver == null) {
+                Node node = load(avatarPopOverView);
+                avatarPopOver = new PopOver(node);
+                avatarPopOver.setDetachable(false);
+                avatarPopOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
+                avatarPopOver.setTitle("Account");
+                node.lookup("#sign")
+                        .setOnMouseClicked(event -> {
+                            signIn();
+                        });
+                avatarPopOver.show(avatar);
+                return;
+            }
 
-
-        menuToggle.setOnMouseClicked(e -> {
-            toggleMenu();
+            if(avatarPopOver.isShowing()) {
+                avatarPopOver.hide();
+            } else {
+                avatarPopOver.show(avatar);
+            }
         });
-
-        clipboard.setOnMouseClicked(e -> {
-            navigate(MainViewState.VIEW_STATE_DEFAULT);
-        });
-
     }
 
     @NonNull
@@ -325,7 +352,6 @@ public class MainViewController {
     }
 
     private void toClipboard() {
-        menuToggle.setText("Clipboard");
         ClipboardModel model = context.getBean(ClipboardModel.class);
         container.setItems(null);
         container.setItems(model.clipboard());
@@ -333,12 +359,29 @@ public class MainViewController {
             System.out.println(Thread.currentThread());
             System.out.println(change);
         });
+    }
+
+    private void refresh() {
+        ClipboardModel model = context.getBean(ClipboardModel.class);
+        model.clipboard().clear();
+        model.refresh();
+    }
+
+    private void search(String text) {
 
     }
 
+    private void cancel() {
 
-    private void setting() {
+    }
 
+    private void cloud(int index, Content content) {
+        content = container.getItems().get(index);
+        if(content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
+            return;
+        }
+        ClipboardModel model = context.getBean(ClipboardModel.class);
+        model.upload(content);
     }
 
     private void copy(int index, Content content) {
@@ -353,12 +396,6 @@ public class MainViewController {
         content = container.getItems().get(index);
         switch (Content.ContentState.get(content.state)) {
             case CONTENT_STATE_NORMAL:
-//                if (clipboardViewModel == null) {
-//                    clipboardViewModel =
-//                            context.getBean(ClipboardViewModel.class);
-//                }
-//                clipboardViewModel.state(content.id,
-//                        Content.ContentState.CONTENT_STATE_DELETE);
                 ClipboardModel model = context.getBean(ClipboardModel.class);
                 model.state(content.id, Content.ContentState.CONTENT_STATE_DELETE);
                 break;
@@ -367,91 +404,49 @@ public class MainViewController {
         }
     }
 
-    private void details(int index, Content content) {
+    private void details(Node root, int index, Content content) {
         content = container.getItems().get(index);
-        Content data = new Content();
-        BeanUtils.copyProperties(content, data);
-        JFXDialog dialog = dialog(load(contentDetailView));
-        normalDetails(dialog, data);
+        if(contentDetailsPopOver == null) {
+            contentDetailsPopOver = new PopOver(load(contentDetailView));
+            contentDetailsPopOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
+            contentDetailsPopOver.setDetachable(false);
+
+            contentDetailsPopOver.show(root);
+        } else if(contentDetailsPopOver.isShowing()){
+            contentDetailsPopOver.hide();
+        } else {
+            contentDetailsPopOver.show(root);
+        }
+
+//        Content data = new Content();
+//        BeanUtils.copyProperties(content, data);
+//        JFXDialog dialog = dialog(load(contentDetailView));
+//        normalDetails(dialog, data);
     }
 
     private void normalDetails(JFXDialog dialog, Content data) {
         // load view
-        TextArea textArea = (TextArea) dialog.lookup("#content");
+        Label label = (Label) dialog.lookup("#content");
         Node copy = dialog.lookup("#copy");
         Node cancel = dialog.lookup("#cancel");
-        Node ok = dialog.lookup("#ok");
+        Node close = dialog.lookup("#close");
         Node delete = dialog.lookup("#delete");
-        Node device = dialog.lookup("#device");
-        Label label = (Label) dialog.lookup("#time");
-        Node edit = dialog.lookup("#edit");
 
-        // initialize
-        textArea.setText(data.content);
-        textArea.setEditable(false);
-        ok.setManaged(false);
-        ok.setVisible(false);
+        label.setText(data.content);
 
-        edit.setOnMouseClicked(e -> {
-            ok.setVisible(true);
-            ok.setManaged(true);
-            edit.setVisible(false);
-            edit.setManaged(false);
-            copy.setVisible(false);
-            copy.setManaged(false);
-            delete.setVisible(false);
-            delete.setManaged(false);
-            textArea.setEditable(true);
-        });
-
-        cancel.setOnMouseClicked(e -> {
-            if (textArea.isEditable()) {
-                textArea.setEditable(false);
-                ok.setVisible(false);
-                ok.setManaged(false);
-                edit.setManaged(true);
-                edit.setVisible(true);
-                copy.setVisible(true);
-                copy.setManaged(true);
-                delete.setVisible(true);
-                delete.setManaged(true);
-                textArea.setText(data.content);
-            } else {
-                dialog.close();
-            }
-        });
-
-        ok.setOnMouseClicked(e -> {
-            if (textArea.isEditable()) {
-                textArea.setEditable(false);
-                ok.setVisible(false);
-                ok.setManaged(false);
-                edit.setManaged(true);
-                edit.setVisible(true);
-                copy.setVisible(true);
-                copy.setManaged(true);
-                delete.setVisible(true);
-                delete.setManaged(true);
-
-                ClipboardModel model = context.getBean(ClipboardModel.class);
-            }
+        close.setOnMouseClicked(e -> {
+            dialog.close();
         });
 
         copy.setOnMouseClicked(e -> {
-            if (!textArea.isEditable()) {
-                Clipboard clipboard = Clipboard.getSystemClipboard();
-                ClipboardContent clipboardContent = new ClipboardContent();
-                clipboardContent.putString(textArea.getText());
-                clipboard.setContent(clipboardContent);
-            }
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.putString(label.getText());
+            clipboard.setContent(clipboardContent);
             dialog.close();
         });
 
         delete.setOnMouseClicked(e -> {
-            if (textArea.isEditable()) {
-                return;
-            }
-
             switch (Content.ContentState.get(data.state)) {
                 case CONTENT_STATE_NORMAL:
                     ClipboardModel model = context.getBean(ClipboardModel.class);

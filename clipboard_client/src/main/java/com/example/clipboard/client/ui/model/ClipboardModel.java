@@ -45,6 +45,35 @@ public class ClipboardModel implements Consumer<Content> {
                 });
     }
 
+    public void upload(Content content) {
+        service.upload(content);
+    }
+
+    public void search(String text) {
+
+    }
+
+    public void signIn(String username, String password) {
+
+    }
+
+    public void signOut() {
+
+    }
+
+    public void register(String username, String email, String password) {
+
+    }
+
+    public void resetPassword(String username, String password, String code) {
+
+    }
+
+    public void sendCode(String username) {
+
+    }
+
+
     @Override
     public void accept(Content content) {
         System.out.println(content);
