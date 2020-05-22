@@ -21,6 +21,7 @@ public class Content {
     public String uuid;
     public String id;
     public String account;
+    public Integer status;
 
     @Lob
     public String content;
@@ -37,6 +38,7 @@ public class Content {
 
     public Content(String id,
                    String account,
+                   ContentStatus status,
                    String content,
                    ContentState state,
                    byte[] hash,
@@ -44,6 +46,7 @@ public class Content {
                    Date update) {
         this.id = id;
         this.account = account;
+        this.status = status.STATUS;
         this.content = content;
         this.state = state.STATE;
         this.hash = hash;
@@ -66,6 +69,15 @@ public class Content {
     public void setAccount(String account) {
         this.account = account;
     }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
 
     public String getContent() {
         return content;
@@ -114,6 +126,7 @@ public class Content {
         Content content1 = (Content) o;
         return Objects.equals(id, content1.id) &&
                 Objects.equals(account, content1.account) &&
+                Objects.equals(status, content1.status) &&
                 Objects.equals(content, content1.content) &&
                 Objects.equals(state, content1.state) &&
                 Arrays.equals(hash, content1.hash) &&
@@ -123,7 +136,7 @@ public class Content {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, account, content, state, hash, create, update);
+        return Objects.hash(id, account, status, content, state, hash, create, update);
     }
 
 
@@ -132,6 +145,7 @@ public class Content {
         return "Content{" +
                 "id='" + id + '\'' +
                 ", account='" + account + '\'' +
+                ", status=" + status +
                 ", content='" + content + '\'' +
                 ", state=" + state +
                 ", hash='" + Arrays.toString(hash) + '\'' +

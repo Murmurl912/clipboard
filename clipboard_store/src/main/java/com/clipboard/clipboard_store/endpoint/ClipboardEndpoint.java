@@ -64,7 +64,7 @@ public class ClipboardEndpoint {
         return service.create(account, data);
     }
 
-    @DeleteMapping("/clipboard/account/{account}/content/{content}")
+    @PatchMapping("/clipboard/account/{account}/content/{content}")
     public Mono<ClipboardContent> delete(@PathVariable String account,
                                          @PathVariable String content,
                                          @RequestBody Date time) {

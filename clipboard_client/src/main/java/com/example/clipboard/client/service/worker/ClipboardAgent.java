@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -92,7 +93,6 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
                         .bodyToFlux(ClipboardEventModel.class)
                         .map(model -> {
                             logger.info("Receive Cloud Clipboard Event: " + model.toString());
-
                             return model;
                         })
                         .doOnError(e -> {
@@ -100,7 +100,12 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
                             connectionAlive.set(false);
                             publisher.publishEvent(new AgentStatusChangeEvent(AgentStatusChangeEvent.EventType.CONNECTION_LOST));
                         })
-                        .subscribe();
+                        .subscribe(model -> {
+                            Map<String, Object> map = new HashMap<>();
+                            map.put("event", model);
+                            publisher.publishEvent(new ClipboardEvent(ClipboardEvent.EventSource.CLOUD_SOURCE,
+                                    ClipboardEvent.EventType.CLIPBOARD_CREATE, map));
+                        });
     }
 
     @Override

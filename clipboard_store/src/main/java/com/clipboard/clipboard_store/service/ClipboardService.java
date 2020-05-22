@@ -109,6 +109,11 @@ public class ClipboardService {
 
                     content.state = ContentState.CONTENT_STATE_DELETE.STATE;
                     return repository.save(content);
+                }).map(c -> {
+                    ClipboardContentEvent event =
+                            new ClipboardContentEvent(c.id, account, CONTENT_STATE_EVENT, c.update);
+                    publisher.publishEvent(event);
+                    return c;
                 });
     }
 

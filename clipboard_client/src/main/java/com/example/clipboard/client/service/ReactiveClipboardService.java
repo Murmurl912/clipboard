@@ -7,11 +7,10 @@ import com.example.clipboard.client.service.worker.event.ClipboardEvent;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.lang.NonNull;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.*;
@@ -39,6 +38,8 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
     private BlockingQueue<Content> contents;
     private final WebClient client;
     private TaskExecutor executor;
+    private boolean disable = true;
+
     public ReactiveClipboardService(CachedContentRepository cached,
                                     MessageDigest digest,
                                     ApplicationContext context,
@@ -74,12 +75,13 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                             content = createContent(text, UUID.randomUUID().toString(), null);
                         }
                     }
+                    content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
                     return content;
                 })
                 .map(cached::save)
                 .map(content -> {
                     submit(content);
-                    contents.offer(content);
+                    syncCreate(content, disable);
                     return content;
                 })
                 .subscribeOn(Schedulers.boundedElastic());
@@ -94,12 +96,12 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 .map(content -> {
                     content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
                     content.update = new Date();
-                    return content;
+                    content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
+                    return cached.save(content);
                 })
-                .map(cached::save)
                 .map(content -> {
                     submit(content);
-                    contents.offer(content);
+                    syncDelete(content, disable);
                     return content;
                 })
                 .subscribeOn(Schedulers.boundedElastic());
@@ -124,20 +126,87 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
         return Mono
                 .fromCallable(() -> cached.getContentsByStateEqualsOrderByUpdateDesc(
                         Content.ContentState.CONTENT_STATE_NORMAL.STATE))
-                .map(list -> {
-                    System.out.println(list);
-                    return list;
-                })
                 .flatMapIterable((contents)->contents)
                 .map(c -> {
+                    if(c.status == Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
+                        contents.offer(c);
+                    }
                     return c;
                 })
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
     public void refresh() {
-        gets("test").subscribe(sink::next);
+        gets("test").doOnError(e ->
+                e.printStackTrace()
+        ).subscribe(sink::next);
         clipboard().subscribe(sink::next);
+    }
+
+    @Scheduled(fixedRate = 5000)
+    private void sync() {
+        if(disable) {
+            return;
+        }
+
+        try {
+            Content content = contents.take();
+            if(content.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
+                syncDelete(content, disable);
+            } else {
+                syncCreate(content, disable);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void syncDelete(Content content, boolean disable) {
+
+        if(disable) {
+            return;
+        }
+
+        delete(content.id, content.account, content.update)
+                .map(c -> {
+                    c.uuid = content.uuid;
+                    if(c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
+                        cached.deleteById(c.uuid);
+                    }
+                    return c;
+                })
+                .doOnError(e -> {
+                    contents.offer(content);
+                    e.printStackTrace();
+                })
+                .subscribe(sink::next);
+    }
+
+    private void syncCreate(Content content, boolean disable) {
+        if(disable) {
+            return;
+        }
+        ContentModel model = new ContentModel();
+        model.update = content.update;
+        model.create = content.create;
+        model.content = content.content;
+        create(model, content.account)
+                .map(c -> {
+                    c.uuid = content.uuid;
+                    c.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
+                    if(c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
+                        cached.deleteById(content.uuid);
+                        return c;
+                    } else {
+                        return cached.save(c);
+                    }
+                })
+                .retry(3)
+                .doOnError(e -> {
+                    contents.offer(content);
+                    e.printStackTrace();
+                })
+                .subscribe(sink::next);
     }
 
     @Override
@@ -169,7 +238,6 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
         return model;
     }
 
-
     public Mono<Content> create(ContentModel model, String account) {
         return client
                 .post()
@@ -178,10 +246,11 @@ public class ReactiveClipboardService implements ApplicationListener<ClipboardEv
                 .retrieve().bodyToMono(Content.class);
     }
 
-    public Mono<Content> delete(String id, String account) {
+    public Mono<Content> delete(String id, String account, Date time) {
         return client
-                .delete()
+                .patch()
                 .uri("/clipboard/account/{account}/content/{content}", account, id)
+                .body(Mono.just(time), Date.class)
                 .retrieve().bodyToMono(Content.class);
     }
 

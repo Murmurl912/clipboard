@@ -47,9 +47,11 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
         appContext.token = app.token;
 
         if(StringUtils.isEmpty(app.account)) {
-            visitor();
+//            visitor();
+            context.publishEvent(new AgentEvent(this, AgentEvent.AgentEventType.START_ALL));
+
         } else {
-            user();
+//            user();
         }
 
     }
@@ -60,7 +62,7 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
     }
 
     private void user() {
-        context.publishEvent(new AgentEvent(this, AgentEvent.AgentEventType.START_LOCAL_AGENT));
+        context.publishEvent(new AgentEvent(this, AgentEvent.AgentEventType.START_ALL));
 
     }
 
