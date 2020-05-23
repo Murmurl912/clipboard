@@ -86,7 +86,8 @@ public class ClipboardModel implements Consumer<Content> {
 
     private void remove(Content content) {
         Platform.runLater(() -> {
-            contents.removeIf(item -> Objects.equals(item.id, content.id) || Objects.equals(item.uuid, content.uuid));
+            contents.removeIf(item -> Objects.equals(item.id, content.id)
+                    || Objects.equals(item.uuid, content.uuid));
         });
     }
 

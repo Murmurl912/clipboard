@@ -61,11 +61,11 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                         content = optional.get();
                         if (Objects.equals(content.content, text)) {
                             content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
-                            content.update = new Date();
                         } else {
-                            content = createContent(text, UUID.randomUUID().toString(), null);
+                            content = createContent(text, UUID.randomUUID().toString(), context.account);
                         }
                     }
+                    content.update = new Date();
                     content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
                     return content;
                 })
@@ -86,15 +86,9 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                 })
                 .cast(Content.class)
                 .map(content -> {
-                    if (content.status ==
-                            Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
-                        cached.deleteById(id);
-                    } else {
-                        content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
-                        content.update = new Date();
-                        content.status = Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS;
-                        content = cached.save(content);
-                    }
+                    cached.deleteById(content.uuid);
+                    content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
+                    content.update = new Date();
                     return content;
 
                 })
@@ -134,6 +128,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                     .doOnError(e ->
                             logger.error("Failed to refresh content: " + e)
                     )
+                    .filter(content -> content.state.equals(Content.ContentState.CONTENT_STATE_DELETE.STATE))
                     .map(content -> {
                         content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
                         return content;
@@ -141,7 +136,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                     .map(this::save)
                     .subscribe(this::submit);
         }
-        clipboard().subscribe(sink::next);
+        clipboard().subscribe(this::submit);
     }
 
     private void syncDelete(Content content, boolean auto) {
@@ -151,17 +146,10 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
         }
 
         delete(content.id, context.account, content.update)
-                .map(c -> {
-                    c.uuid = content.uuid;
-                    if (c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
-                        cached.deleteById(c.uuid);
-                    }
-                    return c;
-                })
                 .doOnError(e -> {
                     logger.error("Failed to delete content: " + e);
                 })
-                .subscribe(sink::next);
+                .subscribe(this::submit);
     }
 
     private void syncCreate(Content content, boolean auto) {
@@ -174,22 +162,10 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
         model.create = content.create;
         model.content = content.content;
         create(model, context.account)
-                .map(c -> {
-                    // save to local
-
-                    c.uuid = content.uuid;
-                    c.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
-                    if (c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
-                        cached.deleteById(content.uuid);
-                        return c;
-                    } else {
-                        return cached.save(c);
-                    }
-                })
                 .doOnError(e -> {
                     logger.error("Failed to create content: " + e);
                 })
-                .subscribe(sink::next);
+                .subscribe(this::submit);
     }
 
     @Override
@@ -206,6 +182,12 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                         content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
                         content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
                         sink.next(content);
+                    } else { // has been deleted
+                        Content content = new Content();
+                        content.id = model.id;
+                        content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
+                        content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
+                        sink.next(content); // make sure delete in memory
                     }
                     break;
                 }
@@ -217,12 +199,13 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                                 content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
                                 return content;
                             })
-                            .map(this::save).subscribe(sink::next);
+                            .map(this::save).subscribe(this::submit);
                     break;
                 }
+
                 Content local = contentOptional.get();
                 if (local.update.equals(model.version)) {
-                    // no need update
+                    // no need to update
                     break;
                 }
 
@@ -233,7 +216,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                             return content;
                         })
                         .map(this::save)
-                        .subscribe(sink::next);
+                        .subscribe(this::submit);
 
                 break;
             case CLIPBOARD_REPORT:

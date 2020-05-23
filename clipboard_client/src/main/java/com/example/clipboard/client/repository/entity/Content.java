@@ -124,21 +124,16 @@ public class Content {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Content content1 = (Content) o;
-        return Objects.equals(id, content1.id) &&
-                Objects.equals(account, content1.account) &&
-                Objects.equals(status, content1.status) &&
+        return Objects.equals(status, content1.status) &&
                 Objects.equals(content, content1.content) &&
                 Objects.equals(state, content1.state) &&
-                Arrays.equals(hash, content1.hash) &&
-                Objects.equals(create, content1.create) &&
                 Objects.equals(update, content1.update);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, account, status, content, state, hash, create, update);
+        return Objects.hash(status, content, state, update);
     }
-
 
     @Override
     public String toString() {
