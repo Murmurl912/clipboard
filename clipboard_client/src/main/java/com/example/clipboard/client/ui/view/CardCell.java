@@ -48,12 +48,12 @@ public class CardCell extends GridCell<Content> {
         this.viewReadyCallback = readyCallback;
     }
 
-    public void setBefore(Content before) {
-        this.before = before;
-    }
-
     public Content getBefore() {
         return before;
+    }
+
+    public void setBefore(Content before) {
+        this.before = before;
     }
 
     @PostConstruct

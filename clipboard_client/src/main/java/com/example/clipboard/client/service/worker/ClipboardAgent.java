@@ -35,12 +35,11 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
     private final ApplicationEventPublisher publisher;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final TaskScheduler scheduler;
+    private final AppContext context;
+    private final AtomicBoolean connectionAlive = new AtomicBoolean(false);
     private ScheduledFuture<?> future;
     private Disposable disposable;
     private String content;
-    private final AppContext context;
-
-    private final AtomicBoolean connectionAlive = new AtomicBoolean(false);
 
     public ClipboardAgent(ApplicationEventPublisher publisher,
                           TaskScheduler scheduler, AppContext context) {
@@ -56,7 +55,7 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
             if (clipboard.hasString()) {
                 String now = clipboard.getString();
 
-                if(Objects.equals(content, now)) {
+                if (Objects.equals(content, now)) {
                     return;
                 }
                 content = now;
@@ -133,18 +132,18 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
     }
 
     private void startCloud() {
-        if(disposable == null) {
+        if (disposable == null) {
             logger.info("Start Cloud Clipboard Agent");
             disposable = cloud();
             return;
         }
 
-        if(disposable.isDisposed()) {
+        if (disposable.isDisposed()) {
             disposable = cloud();
             return;
         }
 
-        if(connectionAlive.get()) {
+        if (connectionAlive.get()) {
             return;
         }
 
@@ -152,7 +151,7 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
     }
 
     private void stopCloud() {
-        if(disposable == null || disposable.isDisposed()) {
+        if (disposable == null || disposable.isDisposed()) {
             return;
         }
 
@@ -161,7 +160,7 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
     }
 
     private void startLocal() {
-        if(future == null || future.isCancelled()) {
+        if (future == null || future.isCancelled()) {
             logger.info("Star Local Clipboard Agent");
             future = scheduler.scheduleAtFixedRate(this::local, context.period);
         } else {
@@ -170,7 +169,7 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
     }
 
     private void stopLocal() {
-        if(future == null || future.isCancelled()) {
+        if (future == null || future.isCancelled()) {
             return;
         }
 

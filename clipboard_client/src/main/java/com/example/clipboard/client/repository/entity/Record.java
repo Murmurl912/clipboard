@@ -9,6 +9,7 @@ public class Record {
         OPERATION_UPDATE(0),
         OPERATION_DELETE(1);
         public int OPERATION;
+
         Operation(int operation) {
             this.OPERATION = operation;
         }

@@ -18,6 +18,7 @@ public class LogoutController {
     private Consumer<Void> callback;
     @Autowired
     private AccountService service;
+
     public void setDialog(JFXDialog dialog, Consumer<Void> callback) {
         this.dialog = dialog;
         this.callback = callback;

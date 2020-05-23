@@ -7,7 +7,7 @@ public class AgentStatusChangeEvent extends AppEvent {
 
     @Override
     public EventType getSource() {
-        return (EventType)super.getSource();
+        return (EventType) super.getSource();
     }
 
     public static enum EventType {

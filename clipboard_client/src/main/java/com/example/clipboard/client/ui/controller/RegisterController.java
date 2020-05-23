@@ -59,41 +59,41 @@ public class RegisterController {
     }
 
     public void confirm(MouseEvent event) {
-        if(StringUtils.isEmpty(username.getText())) {
+        if (StringUtils.isEmpty(username.getText())) {
             hint.setVisible(true);
             hint.setManaged(true);
             hint.setText("Username cannot be empty!");
             return;
         }
-        if(StringUtils.isEmpty(email.getText())) {
+        if (StringUtils.isEmpty(email.getText())) {
             hint.setVisible(true);
             hint.setManaged(true);
             hint.setText("Email cannot be empty!");
             return;
         }
 
-        if(StringUtils.isEmpty(password.getText())) {
+        if (StringUtils.isEmpty(password.getText())) {
             hint.setVisible(true);
             hint.setManaged(true);
             hint.setText("Password cannot be empty!");
             return;
         }
 
-        if(StringUtils.isEmpty(passwordConfirm.getText())) {
+        if (StringUtils.isEmpty(passwordConfirm.getText())) {
             hint.setVisible(true);
             hint.setManaged(true);
             hint.setText("Confrim your password!");
             return;
         }
 
-        if(passwordConfirm.getText().equals(password.getText())) {
+        if (passwordConfirm.getText().equals(password.getText())) {
             service.register(username.getText(), password.getText(), email.getText())
                     .doOnError(error -> {
-                        if(error instanceof EmailRegisteredException) {
+                        if (error instanceof EmailRegisteredException) {
                             hint.setVisible(true);
                             hint.setManaged(true);
                             hint.setText("Email is registered!");
-                        } else if(error instanceof UserNameRegisteredException) {
+                        } else if (error instanceof UserNameRegisteredException) {
                             hint.setVisible(true);
                             hint.setManaged(true);
                             hint.setText("Username is registered!");
@@ -110,12 +110,12 @@ public class RegisterController {
     }
 
     public void signin(MouseEvent event) {
-        new Thread(()->{
+        new Thread(() -> {
             try {
                 FXMLLoader loader = new FXMLLoader(signInView.getURL());
                 loader.setControllerFactory(context::getBean);
                 Node root = loader.load();
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     dialog.setContent((Region) root);
                 });
                 LoginController controller = loader.getController();
@@ -127,7 +127,7 @@ public class RegisterController {
     }
 
     public void keyPressed(KeyEvent keyEvent) {
-        if(hint.isVisible()) {
+        if (hint.isVisible()) {
             hint.setVisible(false);
             hint.setManaged(false);
         }

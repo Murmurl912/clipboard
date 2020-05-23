@@ -2,9 +2,7 @@ package com.example.clipboard.client.ui.controller;
 
 import com.example.clipboard.client.repository.entity.Content;
 import com.example.clipboard.client.repository.model.LoginResponseModel;
-import com.example.clipboard.client.service.AccountService;
 import com.example.clipboard.client.service.AppContext;
-import com.example.clipboard.client.service.ClipboardService;
 import com.example.clipboard.client.ui.model.ClipboardModel;
 import com.example.clipboard.client.ui.view.CardCell;
 import com.jfoenix.controls.JFXButton;
@@ -17,12 +15,10 @@ import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -31,7 +27,6 @@ import javafx.scene.layout.StackPane;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
@@ -42,8 +37,6 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 
@@ -141,20 +134,20 @@ public class MainViewController {
                         return;
                     }
 
-                    if(cell.getBefore() == null) {
+                    if (cell.getBefore() == null) {
                         cell.setBefore(content);
                     } else {
                         Content c = cell.getBefore();
-                        if(Objects.equals(c, content)) {
+                        if (Objects.equals(c, content)) {
                             return;
                         }
                     }
 
-                    if(content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
-                        ((MaterialIconView)((JFXButton)cell.getHolder().get("cloud")).getGraphic())
+                    if (content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
+                        ((MaterialIconView) ((JFXButton) cell.getHolder().get("cloud")).getGraphic())
                                 .setIcon(MaterialIcon.CLOUD_DONE);
                     } else {
-                        ((MaterialIconView)((JFXButton)cell.getHolder().get("cloud")).getGraphic())
+                        ((MaterialIconView) ((JFXButton) cell.getHolder().get("cloud")).getGraphic())
                                 .setIcon(MaterialIcon.CLOUD_OFF);
                     }
 
@@ -185,40 +178,40 @@ public class MainViewController {
         clear.setVisible(false);
         clear.setManaged(false);
         avatar.setOnMouseClicked(e -> {
-            if(avatarPopOver == null) {
-                new Thread(()->{
+            if (avatarPopOver == null) {
+                new Thread(() -> {
                     Node node = load(avatarPopOverView);
                     avatarPopOver = new PopOver(node);
                     avatarPopOver.setDetachable(false);
                     avatarPopOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
                     avatarPopOver.setTitle("Account");
                     AppContext appContext = context.getBean(AppContext.class);
-                    JFXButton sign = (JFXButton)node.lookup("#sign");
-                    JFXButton userAvatar = (JFXButton)node.lookup("#avatar");
+                    JFXButton sign = (JFXButton) node.lookup("#sign");
+                    JFXButton userAvatar = (JFXButton) node.lookup("#avatar");
                     userAvatar.setText(appContext.username);
-                    if(StringUtils.isEmpty(appContext.account)) {
+                    if (StringUtils.isEmpty(appContext.account)) {
                         sign.setText("Sign In");
-                        ((FontAwesomeIconView)sign.getGraphic())
+                        ((FontAwesomeIconView) sign.getGraphic())
                                 .setIcon(FontAwesomeIcon.SIGN_IN);
                     } else {
                         sign.setText("Sign Out");
-                        ((FontAwesomeIconView)sign.getGraphic())
+                        ((FontAwesomeIconView) sign.getGraphic())
                                 .setIcon(FontAwesomeIcon.SIGN_OUT);
                     }
                     sign.setOnMouseClicked(event -> {
-                        if(StringUtils.isEmpty(appContext.account)) {
-                            new Thread(()->{
+                        if (StringUtils.isEmpty(appContext.account)) {
+                            new Thread(() -> {
                                 signin(loginResponseModel -> {
-                                    ((FontAwesomeIconView)sign.getGraphic())
+                                    ((FontAwesomeIconView) sign.getGraphic())
                                             .setIcon(FontAwesomeIcon.SIGN_OUT);
                                     userAvatar.setText(appContext.username);
                                     sign.setText("Sign Out");
                                 });
                             }).start();
                         } else {
-                            new Thread(()->{
+                            new Thread(() -> {
                                 signout(aVoid -> {
-                                    ((FontAwesomeIconView)sign.getGraphic())
+                                    ((FontAwesomeIconView) sign.getGraphic())
                                             .setIcon(FontAwesomeIcon.SIGN_IN);
                                     userAvatar.setText(appContext.username);
                                     sign.setText("Sign In");
@@ -229,14 +222,14 @@ public class MainViewController {
 
                     });
 
-                    Platform.runLater(()->{
+                    Platform.runLater(() -> {
                         avatarPopOver.show(avatar);
                     });
                 }).start();
                 return;
             }
 
-            if(avatarPopOver.isShowing()) {
+            if (avatarPopOver.isShowing()) {
                 avatarPopOver.hide();
             } else {
                 avatarPopOver.show(avatar);
@@ -305,7 +298,7 @@ public class MainViewController {
 
     private void cloud(int index, Content content) {
         content = container.getItems().get(index);
-        if(content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
+        if (content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
             return;
         }
         ClipboardModel model = context.getBean(ClipboardModel.class);
@@ -315,7 +308,7 @@ public class MainViewController {
     private void copy(int index, Content content) {
         content = container.getItems().get(index);
         Content finalContent = content;
-        new Thread(()->{
+        new Thread(() -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();
             ClipboardContent clipboardContent = new ClipboardContent();
             clipboardContent.putString(finalContent.content);
@@ -338,13 +331,13 @@ public class MainViewController {
 
     private void details(Node root, int index, Content content) {
         content = container.getItems().get(index);
-        if(contentDetailsPopOver == null) {
+        if (contentDetailsPopOver == null) {
             contentDetailsPopOver = new PopOver(load(contentDetailView));
             contentDetailsPopOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
             contentDetailsPopOver.setDetachable(false);
 
             contentDetailsPopOver.show(root);
-        } else if(contentDetailsPopOver.isShowing()){
+        } else if (contentDetailsPopOver.isShowing()) {
             contentDetailsPopOver.hide();
         } else {
             contentDetailsPopOver.show(root);

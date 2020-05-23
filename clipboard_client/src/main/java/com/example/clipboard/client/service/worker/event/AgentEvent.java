@@ -23,6 +23,7 @@ public class AgentEvent extends ApplicationEvent {
         STOP_CLOUD_AGENT(5),
         STOP_ALL(6);
         public int TYPE;
+
         AgentEventType(int type) {
             TYPE = type;
         }

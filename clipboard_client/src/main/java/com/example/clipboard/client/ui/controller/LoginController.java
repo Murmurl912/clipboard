@@ -12,11 +12,9 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.input.InputMethodEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
-import javafx.util.Callback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -71,7 +69,7 @@ public class LoginController {
     public void signIn(MouseEvent event) {
         String name = username.getText();
         String pass = password.getText();
-        if(StringUtils.isEmpty(name) || StringUtils.isEmpty(pass)) {
+        if (StringUtils.isEmpty(name) || StringUtils.isEmpty(pass)) {
             hint.setVisible(true);
             hint.setManaged(true);
             hint.setText("Username or password is empty!");
@@ -80,20 +78,20 @@ public class LoginController {
 
         service.signIn(name, pass)
                 .doOnError(error -> {
-                    if(error instanceof ConnectException) {
-                        Platform.runLater(()->{
+                    if (error instanceof ConnectException) {
+                        Platform.runLater(() -> {
                             hint.setVisible(true);
                             hint.setManaged(true);
                             hint.setText("Cannot connect to server!");
                         });
-                    } else if(error instanceof LoginFailedException) {
-                        Platform.runLater(()->{
+                    } else if (error instanceof LoginFailedException) {
+                        Platform.runLater(() -> {
                             hint.setVisible(true);
                             hint.setManaged(true);
                             hint.setText("Login failed, check your password and username!");
                         });
                     } else {
-                        Platform.runLater(()->{
+                        Platform.runLater(() -> {
                             hint.setVisible(true);
                             hint.setManaged(true);
                             hint.setText("Something went wrong, Try again later!");
@@ -101,7 +99,7 @@ public class LoginController {
                     }
                 })
                 .subscribe(loginResponseModel -> {
-                    if(callback != null) {
+                    if (callback != null) {
                         callback.accept(loginResponseModel);
                     }
                     dialog.close();
@@ -110,20 +108,20 @@ public class LoginController {
     }
 
     public void hide(KeyEvent keyEvent) {
-        if(hint.isVisible()) {
+        if (hint.isVisible()) {
             hint.setVisible(false);
             hint.setManaged(false);
         }
     }
 
     public void signup(MouseEvent event) {
-        new Thread(()->{
+        new Thread(() -> {
             try {
                 FXMLLoader loader = new FXMLLoader(signUpView.getURL());
                 loader.setControllerFactory(context::getBean);
                 Node root = loader.load();
                 RegisterController controller = loader.getController();
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     dialog.setContent((Region) root);
                 });
                 controller.setDialog(dialog, callback);

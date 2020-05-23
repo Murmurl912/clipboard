@@ -14,9 +14,9 @@ import java.util.Date;
 @Service
 public class ClipboardGuard implements ApplicationListener<AgentStatusChangeEvent> {
 
-    private double retry = 1;
     private final ApplicationEventPublisher publisher;
     private final TaskScheduler scheduler;
+    private double retry = 1;
 
     public ClipboardGuard(ApplicationEventPublisher publisher,
                           TaskScheduler taskScheduler) {
@@ -28,7 +28,7 @@ public class ClipboardGuard implements ApplicationListener<AgentStatusChangeEven
     public void onApplicationEvent(AgentStatusChangeEvent event) {
         switch (event.getSource()) {
             case CONNECTION_LOST:
-                scheduler.schedule(()-> {
+                scheduler.schedule(() -> {
                     publisher.publishEvent(new AgentEvent(this,
                             AgentEvent.AgentEventType.START_CLOUD_AGENT));
                 }, new Date(System.currentTimeMillis() + retry()));
@@ -41,10 +41,10 @@ public class ClipboardGuard implements ApplicationListener<AgentStatusChangeEven
 
     private long retry() {
         retry = 1.1 * retry;
-        if(retry > 60) {
+        if (retry > 60) {
             retry = 60;
         }
-        return (long)(retry * 500);
+        return (long) (retry * 500);
     }
 
 }

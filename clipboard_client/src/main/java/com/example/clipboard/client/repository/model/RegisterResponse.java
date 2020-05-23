@@ -1,7 +1,5 @@
 package com.example.clipboard.client.repository.model;
 
-import org.springframework.data.annotation.Id;
-
 import java.util.Date;
 
 public class RegisterResponse {

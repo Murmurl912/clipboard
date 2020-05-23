@@ -25,7 +25,7 @@ public class ClipboardEvent extends AppEvent {
 
     @Override
     public EventSource getSource() {
-        return (EventSource)super.getSource();
+        return (EventSource) super.getSource();
     }
 
     public static enum EventSource {

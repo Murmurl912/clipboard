@@ -10,9 +10,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.Objects;
-
 @Lazy(false)
 @Component
 public class ApplicationAgent implements ApplicationListener<AppEvent> {
@@ -24,10 +21,10 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
 
     @Override
     public void onApplicationEvent(AppEvent event) {
-        if(event instanceof AppStartEvent) {
+        if (event instanceof AppStartEvent) {
             // init
             init();
-        } else if(event instanceof AccountLoginEvent) {
+        } else if (event instanceof AccountLoginEvent) {
             appContext.auto = true;
             App app = new App();
             app.id = appContext.id;
@@ -38,7 +35,7 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
             context.getBean(AppRepository.class)
                     .save(app);
             user();
-        } else if(event instanceof AccountLogoutEvent) {
+        } else if (event instanceof AccountLogoutEvent) {
             context.publishEvent(new AgentEvent(this, AgentEvent.AgentEventType.STOP_CLOUD_AGENT));
             appContext.auto = false;
             appContext.username = null;
@@ -72,7 +69,7 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
         appContext.baseUrl = "http://localhost:8080";
         appContext.period = 1000L;
         appContext.limit = 100;
-        if(StringUtils.isEmpty(app.account)) {
+        if (StringUtils.isEmpty(app.account)) {
             visitor();
         } else {
             appContext.auto = true;

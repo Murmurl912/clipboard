@@ -48,18 +48,18 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
     }
 
     public Mono<Content> create(String text) {
-        return Mono.fromCallable(()-> hash(text))
+        return Mono.fromCallable(() -> hash(text))
                 .map(cached::findContentByHashEquals)
                 .map(optional -> {
                     Content content = null;
-                    if(optional.isEmpty()) {
+                    if (optional.isEmpty()) {
                         String uuid = UUID.randomUUID().toString();
                         content = createContent(text, uuid, context.account);
                         content.uuid = uuid;
                         content.hash = hash(content.content);
                     } else {
                         content = optional.get();
-                        if(Objects.equals(content.content, text)) {
+                        if (Objects.equals(content.content, text)) {
                             content.state = Content.ContentState.CONTENT_STATE_NORMAL.STATE;
                             content.update = new Date();
                         } else {
@@ -80,13 +80,13 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
     }
 
     public Mono<Content> delete(String id) {
-        return Mono.fromCallable(()-> cached.findContentByIdEquals(id))
+        return Mono.fromCallable(() -> cached.findContentByIdEquals(id))
                 .handle((optional, sink) -> {
                     optional.ifPresent(sink::next);
                 })
                 .cast(Content.class)
                 .map(content -> {
-                    if(content.status ==
+                    if (content.status ==
                             Content.ContentStatus.CONTENT_STATUS_LOCAL.STATUS) {
                         cached.deleteById(id);
                     } else {
@@ -124,12 +124,12 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
         return Mono
                 .fromCallable(() -> cached.getContentsByStateEqualsOrderByUpdateDesc(
                         Content.ContentState.CONTENT_STATE_NORMAL.STATE))
-                .flatMapIterable((contents)->contents)
+                .flatMapIterable((contents) -> contents)
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
     public void refresh() {
-        if(context.auto) {
+        if (context.auto) {
             gets(context.account)
                     .doOnError(e ->
                             logger.error("Failed to refresh content: " + e)
@@ -146,14 +146,14 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
 
     private void syncDelete(Content content, boolean auto) {
 
-        if(!auto) {
+        if (!auto) {
             return;
         }
 
         delete(content.id, context.account, content.update)
                 .map(c -> {
                     c.uuid = content.uuid;
-                    if(c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
+                    if (c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
                         cached.deleteById(c.uuid);
                     }
                     return c;
@@ -165,7 +165,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
     }
 
     private void syncCreate(Content content, boolean auto) {
-        if(!auto) {
+        if (!auto) {
             return;
         }
 
@@ -179,7 +179,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
 
                     c.uuid = content.uuid;
                     c.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
-                    if(c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
+                    if (c.state == Content.ContentState.CONTENT_STATE_DELETE.STATE) {
                         cached.deleteById(content.uuid);
                         return c;
                     } else {
@@ -199,8 +199,8 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                 ClipboardEventModel model = (ClipboardEventModel) event.getPayloud().get("event");
                 Optional<Content> contentOptional = cached.findContentByIdEquals(model.id);
 
-                if(model.type == ClipboardEventModel.ClipboardContentEventType.CONTENT_STATE_EVENT.EVENT) {
-                    if(contentOptional.isPresent()) {
+                if (model.type == ClipboardEventModel.ClipboardContentEventType.CONTENT_STATE_EVENT.EVENT) {
+                    if (contentOptional.isPresent()) {
                         Content content = contentOptional.get();
                         cached.deleteById(content.uuid);
                         content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
@@ -210,7 +210,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                     break;
                 }
 
-                if(contentOptional.isEmpty()) {
+                if (contentOptional.isEmpty()) {
                     // no id found
                     get(model.source, model.id)
                             .map(content -> {
@@ -221,7 +221,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                     break;
                 }
                 Content local = contentOptional.get();
-                if(local.update.equals(model.version)) {
+                if (local.update.equals(model.version)) {
                     // no need update
                     break;
                 }
@@ -237,7 +237,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
 
                 break;
             case CLIPBOARD_REPORT:
-                String content = (String)event.getPayloud().get("clipboard");
+                String content = (String) event.getPayloud().get("clipboard");
                 create(content).subscribe();
                 break;
         }
@@ -293,7 +293,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
     private Content save(Content content) {
         Optional<Content> optionalContent =
                 cached.findContentByHashEquals(content.hash);
-        if(optionalContent.isEmpty()) {
+        if (optionalContent.isEmpty()) {
             // no hash equal find
             content.uuid = UUID.randomUUID().toString();
             return cached.save(content);
@@ -301,7 +301,7 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
 
         Content local = optionalContent.get();
 
-        if(local.content.equals(content.content)) {
+        if (local.content.equals(content.content)) {
             // identical found
             content.uuid = local.uuid;
             return cached.save(content);

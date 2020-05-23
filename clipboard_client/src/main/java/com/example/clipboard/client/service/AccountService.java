@@ -9,7 +9,6 @@ import com.example.clipboard.client.service.exception.LoginFailedException;
 import com.example.clipboard.client.service.exception.UserNameRegisteredException;
 import com.example.clipboard.client.service.worker.event.AccountLoginEvent;
 import com.example.clipboard.client.service.worker.event.AccountLogoutEvent;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -32,7 +31,7 @@ public class AccountService {
     }
 
     public Mono<LoginResponseModel> signIn(String username,
-                       String password) {
+                                           String password) {
         LoginModel model = new LoginModel();
         model.username = username;
         model.password = password;
