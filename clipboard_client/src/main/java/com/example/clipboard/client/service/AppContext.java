@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AppContext {
-    public String id;
+    public String id = "app";
     public String username;
     public String account;
     public String token;

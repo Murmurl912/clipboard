@@ -73,6 +73,9 @@ public class ClipboardModel implements Consumer<Content> {
 
     }
 
+    public AppContext context() {
+        return appContext;
+    }
 
     @Override
     public void accept(Content content) {
@@ -91,6 +94,7 @@ public class ClipboardModel implements Consumer<Content> {
         if(content.state == Content.ContentState.CONTENT_STATE_NORMAL.STATE) {
             Platform.runLater(()->{
                 contents.add(0, content);
+                contents.sort((a, b) -> - a.update.compareTo(b.update));
             });
         }
     }

@@ -41,6 +41,19 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
         } else if(event instanceof AccountLogoutEvent) {
             context.publishEvent(new AgentEvent(this, AgentEvent.AgentEventType.STOP_CLOUD_AGENT));
             appContext.auto = false;
+            appContext.username = null;
+            appContext.account = null;
+            appContext.email = null;
+            appContext.token = null;
+
+            App app = new App();
+            app.id = appContext.id;
+            app.username = null;
+            app.email = null;
+            app.account = null;
+            app.token = null;
+            context.getBean(AppRepository.class)
+                    .save(app);
         }
     }
 
@@ -51,7 +64,7 @@ public class ApplicationAgent implements ApplicationListener<AppEvent> {
     private void init() {
 
         App app = load();
-        appContext.id = app.id;
+        appContext.id = "app";
         appContext.account = app.account;
         appContext.username = app.username;
         appContext.email = app.email;

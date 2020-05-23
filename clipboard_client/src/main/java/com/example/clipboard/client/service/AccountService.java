@@ -42,8 +42,8 @@ public class AccountService {
                 .retrieve()
                 .onStatus(status -> status.equals(HttpStatus.UNAUTHORIZED),
                         response -> {
-                    return Mono.error(new LoginFailedException());
-                })
+                            return Mono.error(new LoginFailedException());
+                        })
                 .bodyToMono(LoginResponseModel.class)
                 .map(login -> {
                     context.account = login.id;

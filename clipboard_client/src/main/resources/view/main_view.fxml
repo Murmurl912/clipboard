@@ -29,7 +29,7 @@
                <JFXButton style="-fx-background-radius: 20px; -fx-background-color: lightgray"
                           fx:id="avatar" BorderPane.alignment="CENTER" focusTraversable="false">
                   <graphic>
-                     <FontAwesomeIconView glyphName="USER" size="18"/>
+                     <FontAwesomeIconView glyphName="USER" />
                   </graphic>
                </JFXButton>
                <JFXButton fx:id="user" BorderPane.alignment="CENTER" focusTraversable="false">
@@ -40,22 +40,23 @@
          <right>
             <JFXButton fx:id="refresh" layoutX="10.0" layoutY="10.0" focusTraversable="false">
                <graphic>
-                  <FontAwesomeIconView glyphName="UNDO" size="18"/>
+                  <FontAwesomeIconView glyphName="UNDO" />
                </graphic>
             </JFXButton>
          </right>
          <center>
             <HBox BorderPane.alignment="CENTER">
-               <TextField HBox.hgrow="ALWAYS" focusTraversable="false" fx:id="searchEntry">
+               <TextField  style="-fx-background-color: f0f0f0"
+                           HBox.hgrow="ALWAYS" focusTraversable="false" fx:id="searchEntry">
                </TextField>
                <JFXButton focusTraversable="false" fx:id="search">
                   <graphic>
-                     <FontAwesomeIconView glyphName="SEARCH" size="18"/>
+                     <FontAwesomeIconView glyphName="SEARCH" />
                   </graphic>
                </JFXButton>
                <JFXButton focusTraversable="false" fx:id="clear">
                   <graphic>
-                     <FontAwesomeIconView glyphName="TIMES" size="18"/>
+                     <FontAwesomeIconView glyphName="TIMES" />
                   </graphic>
                </JFXButton>
             </HBox>

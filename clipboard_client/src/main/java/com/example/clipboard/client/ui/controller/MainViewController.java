@@ -1,11 +1,17 @@
 package com.example.clipboard.client.ui.controller;
 
 import com.example.clipboard.client.repository.entity.Content;
+import com.example.clipboard.client.repository.model.LoginResponseModel;
+import com.example.clipboard.client.service.AccountService;
+import com.example.clipboard.client.service.AppContext;
+import com.example.clipboard.client.service.ClipboardService;
 import com.example.clipboard.client.ui.model.ClipboardModel;
 import com.example.clipboard.client.ui.view.CardCell;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXToolbar;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
@@ -31,12 +37,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 
 @FxmlView
@@ -50,8 +58,6 @@ public class MainViewController {
     public GridView<Content> container;
     public StackPane root;
     public JFXButton clipboard;
-    public AtomicReference<MainViewState> stateAtomicReference = new AtomicReference<>(MainViewState.VIEW_STATE_DEFAULT);
-    public AtomicBoolean transforming = new AtomicBoolean(false);
     public JFXButton refresh;
     public JFXButton user;
     public JFXButton avatar;
@@ -60,8 +66,7 @@ public class MainViewController {
     private Resource signInView;
     @Value("classpath:view/signout_dialog.fxml")
     private Resource signOutView;
-    @Value("classpath:view/signup_dialog.fxml")
-    private Resource signUpView;
+
     @Value("classpath:view/profile_dialog.fxml")
     private Resource profileView;
     @Value("classpath:view/password_dialog.fxml")
@@ -170,25 +175,64 @@ public class MainViewController {
             }
         });
         view();
-        navigate(MainViewState.VIEW_STATE_DEFAULT);
+        toClipboard();
     }
 
     private void view() {
         refresh.setOnMouseClicked(e -> {
             refresh();
         });
+        clear.setVisible(false);
+        clear.setManaged(false);
         avatar.setOnMouseClicked(e -> {
             if(avatarPopOver == null) {
-                Node node = load(avatarPopOverView);
-                avatarPopOver = new PopOver(node);
-                avatarPopOver.setDetachable(false);
-                avatarPopOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
-                avatarPopOver.setTitle("Account");
-                node.lookup("#sign")
-                        .setOnMouseClicked(event -> {
-                            signIn();
-                        });
-                avatarPopOver.show(avatar);
+                new Thread(()->{
+                    Node node = load(avatarPopOverView);
+                    avatarPopOver = new PopOver(node);
+                    avatarPopOver.setDetachable(false);
+                    avatarPopOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
+                    avatarPopOver.setTitle("Account");
+                    AppContext appContext = context.getBean(AppContext.class);
+                    JFXButton sign = (JFXButton)node.lookup("#sign");
+                    JFXButton userAvatar = (JFXButton)node.lookup("#avatar");
+                    userAvatar.setText(appContext.username);
+                    if(StringUtils.isEmpty(appContext.account)) {
+                        sign.setText("Sign In");
+                        ((FontAwesomeIconView)sign.getGraphic())
+                                .setIcon(FontAwesomeIcon.SIGN_IN);
+                    } else {
+                        sign.setText("Sign Out");
+                        ((FontAwesomeIconView)sign.getGraphic())
+                                .setIcon(FontAwesomeIcon.SIGN_OUT);
+                    }
+                    sign.setOnMouseClicked(event -> {
+                        if(StringUtils.isEmpty(appContext.account)) {
+                            new Thread(()->{
+                                signin(loginResponseModel -> {
+                                    ((FontAwesomeIconView)sign.getGraphic())
+                                            .setIcon(FontAwesomeIcon.SIGN_OUT);
+                                    userAvatar.setText(appContext.username);
+                                    sign.setText("Sign Out");
+                                });
+                            }).start();
+                        } else {
+                            new Thread(()->{
+                                signout(aVoid -> {
+                                    ((FontAwesomeIconView)sign.getGraphic())
+                                            .setIcon(FontAwesomeIcon.SIGN_IN);
+                                    userAvatar.setText(appContext.username);
+                                    sign.setText("Sign In");
+                                });
+                            }).start();
+                        }
+                        avatarPopOver.hide();
+
+                    });
+
+                    Platform.runLater(()->{
+                        avatarPopOver.show(avatar);
+                    });
+                }).start();
                 return;
             }
 
@@ -200,18 +244,6 @@ public class MainViewController {
         });
     }
 
-    @NonNull
-    private JFXDialog dialog(@NonNull Node node) {
-        JFXDialog dialog = new JFXDialog();
-        dialog.setDialogContainer(root);
-        dialog.setCacheContainer(true);
-        dialog.setTransitionType(JFXDialog.DialogTransition.NONE);
-
-        dialog.getChildren().remove(dialog.getContent());
-        dialog.setContent((Region) node);
-        return dialog;
-    }
-
     private Node load(@NonNull Resource resource) {
         try {
             FXMLLoader loader = new FXMLLoader(resource.getURL());
@@ -221,155 +253,40 @@ public class MainViewController {
         }
     }
 
-    private void navigate(MainViewState next) {
-        if (transforming.get()) {
-            return;
+    private void signin(Consumer<LoginResponseModel> callback) {
+        try {
+            FXMLLoader loader = new FXMLLoader(signInView.getURL());
+            loader.setControllerFactory(context::getBean);
+            Node root = loader.load();
+            LoginController controller = loader.getController();
+            JFXDialog dialog = new JFXDialog
+                    (MainViewController.this.root, (Region) root, JFXDialog.DialogTransition.CENTER);
+            controller.setDialog(dialog, callback);
+            Platform.runLater(dialog::show);
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
         }
-
-        Platform.runLater(() -> {
-            long start = System.currentTimeMillis();
-            transforming.set(true);
-            switch (next) {
-                case VIEW_STATE_SIGN_IN: {
-                    signIn();
-                }
-                break;
-
-                case VIEW_STATE_SIGN_OUT: {
-                    signout();
-                }
-                break;
-
-                case VIEW_STATE_PROFILE: {
-                    profile();
-                }
-                break;
-
-                case VIEW_STATE_SIGN_UP: {
-                    signup();
-                }
-                break;
-
-                case VIEW_STATE_ACTIVATE: {
-                    activate();
-                }
-                break;
-
-                case VIEW_STATE_EMAIL: {
-                    email();
-                }
-                break;
-
-                case VIEW_STATE_PASSWORD: {
-                    password();
-                }
-                break;
-
-
-                default: {
-                    toClipboard();
-                }
-            }
-            transforming.set(false);
-            long end = System.currentTimeMillis();
-            System.out.println("Time: " + (end - start));
-        });
     }
 
-    private void signIn() {
-        JFXDialog dialog = dialog(load(signInView));
-        dialog.lookup("#confirm")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#cancel")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#passwordReset")
-                .setOnMouseClicked(e -> {
-                    dialog.close();
-                    navigate(MainViewState.VIEW_STATE_PASSWORD);
-                });
-        dialog.lookup("#signup")
-                .setOnMouseClicked(e -> {
-                    dialog.close();
-                    navigate(MainViewState.VIEW_STATE_SIGN_UP);
-                });
-        dialog.show();
-    }
-
-    private void signup() {
-        JFXDialog dialog = dialog(load(signUpView));
-        dialog.lookup("#confirm")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#cancel")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#password");
-        dialog.lookup("#email");
-        dialog.lookup("#passwordConfirm");
-        dialog.lookup("#signIn")
-                .setOnMouseClicked(e -> {
-                    dialog.close();
-                    navigate(MainViewState.VIEW_STATE_SIGN_IN);
-                });
-        dialog.show();
-    }
-
-    private void signout() {
-        JFXDialog dialog = dialog(load(signUpView));
-        dialog.lookup("#confirm")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#cancel")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.show();
-    }
-
-    private void profile() {
-        JFXDialog dialog = dialog(load(profileView));
-        dialog.lookup("#confirm")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#cancel")
-                .setOnMouseClicked(e -> dialog.close());
-
-        dialog.lookup("#username");
-        dialog.lookup("#avatar");
-
-        dialog.show();
-    }
-
-    private void password() {
-        JFXDialog dialog = dialog(load(passwordView));
-        dialog.lookup("#confirm")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#cancel")
-                .setOnMouseClicked(e -> dialog.close());
-
-        dialog.show();
-    }
-
-    private void email() {
-        JFXDialog dialog = dialog(load(emailView));
-        dialog.lookup("#confirm")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#cancel")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.show();
-    }
-
-    private void activate() {
-        JFXDialog dialog = dialog(load(activateView));
-        dialog.lookup("#confirm")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.lookup("#cancel")
-                .setOnMouseClicked(e -> dialog.close());
-        dialog.show();
+    private void signout(Consumer<Void> callback) {
+        try {
+            FXMLLoader loader = new FXMLLoader(signOutView.getURL());
+            loader.setControllerFactory(context::getBean);
+            Node root = loader.load();
+            LogoutController controller = loader.getController();
+            JFXDialog dialog = new JFXDialog
+                    (MainViewController.this.root, (Region) root, JFXDialog.DialogTransition.CENTER);
+            controller.setDialog(dialog, callback);
+            Platform.runLater(dialog::show);
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
     }
 
     private void toClipboard() {
         ClipboardModel model = context.getBean(ClipboardModel.class);
         container.setItems(null);
         container.setItems(model.clipboard());
-        model.clipboard().addListener((ListChangeListener<? super Content>) change -> {
-            System.out.println(Thread.currentThread());
-            System.out.println(change);
-        });
     }
 
     private void refresh() {
@@ -397,10 +314,14 @@ public class MainViewController {
 
     private void copy(int index, Content content) {
         content = container.getItems().get(index);
-        Clipboard clipboard = Clipboard.getSystemClipboard();
-        ClipboardContent clipboardContent = new ClipboardContent();
-        clipboardContent.putString(content.content);
-        clipboard.setContent(clipboardContent);
+        Content finalContent = content;
+        new Thread(()->{
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.putString(finalContent.content);
+            clipboard.setContent(clipboardContent);
+        }).start();
+
     }
 
     private void delete(int index, Content content) {
@@ -428,63 +349,6 @@ public class MainViewController {
         } else {
             contentDetailsPopOver.show(root);
         }
-
-//        Content data = new Content();
-//        BeanUtils.copyProperties(content, data);
-//        JFXDialog dialog = dialog(load(contentDetailView));
-//        normalDetails(dialog, data);
     }
 
-    private void normalDetails(JFXDialog dialog, Content data) {
-        // load view
-        Label label = (Label) dialog.lookup("#content");
-        Node copy = dialog.lookup("#copy");
-        Node cancel = dialog.lookup("#cancel");
-        Node close = dialog.lookup("#close");
-        Node delete = dialog.lookup("#delete");
-
-        label.setText(data.content);
-
-        close.setOnMouseClicked(e -> {
-            dialog.close();
-        });
-
-        copy.setOnMouseClicked(e -> {
-            Clipboard clipboard = Clipboard.getSystemClipboard();
-            ClipboardContent clipboardContent = new ClipboardContent();
-            clipboardContent.putString(label.getText());
-            clipboard.setContent(clipboardContent);
-            dialog.close();
-        });
-
-        delete.setOnMouseClicked(e -> {
-            switch (Content.ContentState.get(data.state)) {
-                case CONTENT_STATE_NORMAL:
-                    ClipboardModel model = context.getBean(ClipboardModel.class);
-                    model.state(data.id, Content.ContentState.CONTENT_STATE_DELETE);
-                    break;
-                case CONTENT_STATE_DELETE:
-            }
-            dialog.close();
-        });
-
-        dialog.show();
-    }
-
-    private void toggleMenu() {
-        menu.setManaged(!menu.isManaged());
-        menu.setVisible(!menu.isVisible());
-    }
-
-    public enum MainViewState {
-        VIEW_STATE_DEFAULT,
-        VIEW_STATE_SIGN_IN,
-        VIEW_STATE_SIGN_UP,
-        VIEW_STATE_SIGN_OUT,
-        VIEW_STATE_PROFILE,
-        VIEW_STATE_PASSWORD,
-        VIEW_STATE_EMAIL,
-        VIEW_STATE_ACTIVATE,
-        VIEW_STATE_SETTING,
-    }
 }

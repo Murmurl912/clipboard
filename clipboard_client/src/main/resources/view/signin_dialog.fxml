@@ -1,40 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.jfoenix.controls.JFXButton?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import com.jfoenix.controls.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<VBox prefWidth="350.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
-   <VBox>
+<VBox prefWidth="350.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.clipboard.client.ui.controller.LoginController">
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+   <Label text="Username">
       <padding>
-         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+         <Insets bottom="5.0" />
       </padding>
-      <Label text="Username">
-         <padding>
-            <Insets bottom="5.0"/>
-         </padding>
-      </Label>
-      <TextField fx:id="username"/>
-      <Label text="Password">
-         <padding>
-            <Insets bottom="5.0" top="5.0"/>
-         </padding>
-      </Label>
-      <PasswordField fx:id="password"/>
-      <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS"/>
-      <HBox>
-         <VBox.margin>
-            <Insets/>
-         </VBox.margin>
-         <JFXButton layoutX="340.0" layoutY="10.0" maxWidth="1.7976931348623157E308" text="Cancel" fx:id="cancel"/>
-         <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS"/>
-         <JFXButton maxWidth="1.7976931348623157E308" text="Forget Password?" fx:id="passwordReset"/>
-         <JFXButton layoutX="320.0" layoutY="10.0" maxWidth="1.7976931348623157E308" text="Sign Up" fx:id="signup"/>
-         <JFXButton layoutX="320.0" layoutY="10.0" maxWidth="1.7976931348623157E308" text="Confirm" fx:id="confirm"/>
-      </HBox>
-   </VBox>
+   </Label>
+   <TextField fx:id="username" onKeyPressed="#hide" style="-fx-background-color: #f0f0f0"/>
+   <Label text="Password">
+      <padding>
+         <Insets bottom="5.0" top="5.0" />
+      </padding>
+   </Label>
+   <PasswordField style="-fx-background-color: f0f0f0"
+                  fx:id="password" onKeyPressed="#hide" />
+   <Label fx:id="hint" textFill="RED" visible="false" managed="false">
+      <padding>
+         <Insets bottom="5.0" top="5.0"/>
+      </padding>
+   </Label>
+   <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+   <HBox>
+      <VBox.margin>
+         <Insets />
+      </VBox.margin>
+      <JFXButton layoutX="340.0" layoutY="10.0" maxWidth="1.7976931348623157E308" onMouseClicked="#close" text="Cancel" />
+      <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+      <JFXButton fx:id="passwordReset" maxWidth="1.7976931348623157E308" text="Forget Password?" />
+      <JFXButton fx:id="signup" layoutX="320.0" layoutY="10.0" maxWidth="1.7976931348623157E308" text="Sign Up" onMouseClicked="#signup" />
+      <JFXButton layoutX="320.0" layoutY="10.0" maxWidth="1.7976931348623157E308" onMouseClicked="#signIn" text="Confirm" />
+   </HBox>
 </VBox>
