@@ -1,7 +1,6 @@
 package com.clipboard.clipboard_store.endpoint;
 
 import com.clipboard.clipboard_store.endpoint.model.ContentModel;
-import com.clipboard.clipboard_store.endpoint.model.StateModel;
 import com.clipboard.clipboard_store.event.ClipboardEvent;
 import com.clipboard.clipboard_store.repository.entity.ClipboardContent;
 import com.clipboard.clipboard_store.service.ClipboardEventPublisher;
@@ -13,7 +12,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-import java.io.File;
 import java.util.Date;
 
 @RestController

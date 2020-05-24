@@ -16,7 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Date;
 
-import static com.clipboard.clipboard_store.event.ClipboardContentEvent.ClipboardContentEventType.*;
+import static com.clipboard.clipboard_store.event.ClipboardContentEvent.ClipboardContentEventType.CONTENT_CREATE_EVENT;
+import static com.clipboard.clipboard_store.event.ClipboardContentEvent.ClipboardContentEventType.CONTENT_STATE_EVENT;
 import static com.clipboard.clipboard_store.repository.entity.ClipboardContent.ContentState;
 
 @Service

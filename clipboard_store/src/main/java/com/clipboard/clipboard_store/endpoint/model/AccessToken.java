@@ -1,6 +1,5 @@
 package com.clipboard.clipboard_store.endpoint.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;

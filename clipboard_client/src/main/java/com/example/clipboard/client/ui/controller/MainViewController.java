@@ -15,7 +15,6 @@ import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -79,6 +78,7 @@ public class MainViewController {
     private Resource avatarPopOverView;
 
     private PopOver avatarPopOver;
+    private PopOver contentDetailsPopOver;
 
     public MainViewController(ApplicationContext context) {
         this.context = context;
@@ -363,13 +363,18 @@ public class MainViewController {
         refresh();
     }
 
-
     private void details(Node root, int index, Content content) {
         content = container.getItems().get(index);
         Content finalContent1 = content;
         new Thread(()->{
+            if(contentDetailsPopOver != null) {
+                if(contentDetailsPopOver.isShowing()) {
+                    contentDetailsPopOver.hide();
+                }
+            }
+
             Node node = load(contentDetailView);
-            PopOver contentDetailsPopOver = new PopOver(node);
+            contentDetailsPopOver = new PopOver(node);
             contentDetailsPopOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
             contentDetailsPopOver.setDetachable(false);
             ((TextArea)node.lookup("#content"))

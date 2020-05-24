@@ -1,7 +1,6 @@
 package com.clipboard.clipboard_store.repository.entity;
 
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
 
