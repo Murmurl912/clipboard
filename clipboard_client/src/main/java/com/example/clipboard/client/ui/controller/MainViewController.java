@@ -143,7 +143,7 @@ public class MainViewController {
                         }
                     }
 
-                    if (content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
+                    if (Objects.equals(content.status, Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS)) {
                         ((MaterialIconView) ((JFXButton) cell.getHolder().get("cloud")).getGraphic())
                                 .setIcon(MaterialIcon.CLOUD_DONE);
                     } else {
@@ -308,12 +308,10 @@ public class MainViewController {
     private void copy(int index, Content content) {
         content = container.getItems().get(index);
         Content finalContent = content;
-        new Thread(() -> {
-            Clipboard clipboard = Clipboard.getSystemClipboard();
-            ClipboardContent clipboardContent = new ClipboardContent();
-            clipboardContent.putString(finalContent.content);
-            clipboard.setContent(clipboardContent);
-        }).start();
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent clipboardContent = new ClipboardContent();
+        clipboardContent.putString(finalContent.content);
+        clipboard.setContent(clipboardContent);
 
     }
 
