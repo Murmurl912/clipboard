@@ -28,6 +28,7 @@ public class ClipboardModel implements Consumer<Content> {
     }
 
     public void refresh() {
+        Platform.runLater(contents::clear);
         service.refresh();
     }
 
@@ -49,32 +50,12 @@ public class ClipboardModel implements Consumer<Content> {
         service.upload(content);
     }
 
-    public void search(String text) {
-
-    }
-
-    public void signIn(String username, String password) {
-
-    }
-
-    public void signOut() {
-
-    }
-
-    public void register(String username, String email, String password) {
-
-    }
-
-    public void resetPassword(String username, String password, String code) {
-
-    }
-
-    public void sendCode(String username) {
-
-    }
-
     public AppContext context() {
         return appContext;
+    }
+
+    public void clear() {
+        Platform.runLater(contents::clear);
     }
 
     @Override

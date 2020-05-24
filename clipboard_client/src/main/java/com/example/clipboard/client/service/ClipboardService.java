@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.lang.NonNull;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.*;
@@ -86,9 +87,9 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                 })
                 .cast(Content.class)
                 .map(content -> {
-                    cached.deleteById(content.uuid);
                     content.state = Content.ContentState.CONTENT_STATE_DELETE.STATE;
                     content.update = new Date();
+                    cached.save(content);
                     return content;
 
                 })
@@ -128,7 +129,6 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                     .doOnError(e ->
                             logger.error("Failed to refresh content: " + e)
                     )
-                    .filter(content -> content.state.equals(Content.ContentState.CONTENT_STATE_DELETE.STATE))
                     .map(content -> {
                         content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
                         return content;
@@ -165,7 +165,32 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                 .doOnError(e -> {
                     logger.error("Failed to create content: " + e);
                 })
-                .subscribe(this::submit);
+                .subscribe();
+    }
+
+    private void syncRefresh() {
+        if(context.auto) {
+            gets(context.account)
+                    .map(content -> {
+                        content.status = Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS;
+                        return content;
+                    })
+                    .filter(content -> {
+                        Optional<Content> contentOptional = cached.findContentByIdEquals(content.id);
+                        if(contentOptional.isEmpty()) {
+                            return true;
+                        }
+
+                        Content local = contentOptional.get();
+                        return !Objects.equals(local.update, content.update)
+                                ||
+                                !Objects.equals(local.content, content.content)
+                                ||
+                                !Objects.equals(local.state, content.state);
+                    })
+                    .map(this::save)
+                    .subscribe(this::submit);
+        }
     }
 
     @Override
@@ -223,6 +248,8 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
                 String content = (String) event.getPayloud().get("clipboard");
                 create(content).subscribe();
                 break;
+            case CLIPBOARD_CLEAR:
+                cached.deleteAll();
         }
     }
 
@@ -263,14 +290,17 @@ public class ClipboardService implements ApplicationListener<ClipboardEvent> {
         return client
                 .get()
                 .uri("/clipboard/account/{account}/contents", account)
-                .retrieve().bodyToFlux(Content.class);
+                .retrieve()
+                .bodyToFlux(Content.class)
+                ;
     }
 
     public Mono<Content> get(String account, String id) {
         return client
                 .get()
                 .uri("/clipboard/account/{account}/content/{content}", account, id)
-                .retrieve().bodyToMono(Content.class);
+                .retrieve()
+                .bodyToMono(Content.class);
     }
 
     private Content save(Content content) {

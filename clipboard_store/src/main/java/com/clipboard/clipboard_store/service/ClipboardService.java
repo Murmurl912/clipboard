@@ -51,7 +51,10 @@ public class ClipboardService {
                                 .is(account)
                                 .and("state")
                                 .is(ContentState.CONTENT_STATE_NORMAL.STATE)
-                ).all();
+                ).all().map(content -> {
+                    System.out.println(content);
+                    return content;
+                });
 
     }
 
@@ -105,7 +108,7 @@ public class ClipboardService {
                 .flatMap(content -> {
                     // last write win
                     if(content.update.after(time)) {
-                        return Mono.just(content);
+                        return Mono.empty();
                     }
 
                     content.state = ContentState.CONTENT_STATE_DELETE.STATE;

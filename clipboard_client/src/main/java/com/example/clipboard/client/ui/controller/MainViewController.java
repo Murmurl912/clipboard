@@ -215,6 +215,9 @@ public class MainViewController {
                                             .setIcon(FontAwesomeIcon.SIGN_IN);
                                     userAvatar.setText(appContext.username);
                                     sign.setText("Sign In");
+                                    Platform.runLater(()->{
+                                        container.getItems().clear();
+                                    });
                                 });
                             }).start();
                         }

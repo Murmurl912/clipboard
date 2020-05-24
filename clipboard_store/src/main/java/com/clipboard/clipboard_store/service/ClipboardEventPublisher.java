@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.util.function.Consumer;
@@ -17,6 +18,15 @@ public class ClipboardEventPublisher implements
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private FluxSink<ClipboardEvent> sink = null;
+    private Flux<ClipboardEvent> flux;
+
+    public Flux<ClipboardEvent> subscribe() {
+        if(sink == null) {
+            flux = Flux.create(this)
+                    .share();
+        }
+        return flux;
+    }
 
     @Override
     public void onApplicationEvent(ClipboardEvent clipboardEvent) {

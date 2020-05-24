@@ -75,7 +75,7 @@ public class ClipboardEndpoint {
             produces = MediaType.APPLICATION_STREAM_JSON_VALUE)
     public Flux<ClipboardEvent> listen(@PathVariable String account,
                                        WebSession webSession) {
-        return Flux.create(publisher).share()
+        return publisher.subscribe()
                 .filter(clipboardEvent -> clipboardEvent.getSource().equals(account))
                 .map(event -> {
                     System.out.println(event);

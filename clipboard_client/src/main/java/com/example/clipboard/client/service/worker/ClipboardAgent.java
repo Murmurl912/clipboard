@@ -36,7 +36,6 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final TaskScheduler scheduler;
     private final AppContext context;
-    private final AtomicBoolean connectionAlive = new AtomicBoolean(false);
     private ScheduledFuture<?> future;
     private Disposable disposable;
     private String content;
@@ -79,20 +78,17 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
                             @Override
                             public Mono<? extends Throwable> apply(ClientResponse response) {
                                 logger.info("Cloud Connection Error: " + response.statusCode());
-                                connectionAlive.set(false);
                                 publisher.publishEvent(new AgentStatusChangeEvent(AgentStatusChangeEvent.EventType.CONNECTION_LOST));
                                 return null;
                             }
                         })
                         .bodyToFlux(ClipboardEventModel.class)
                         .map(model -> {
-                            connectionAlive.set(true);
                             logger.info("Receive Cloud Clipboard Event: " + model.toString());
                             return model;
                         })
                         .doOnError(e -> {
                             logger.info("Cloud Connection Error: " + e.toString());
-                            connectionAlive.set(false);
                             publisher.publishEvent(new AgentStatusChangeEvent(AgentStatusChangeEvent.EventType.CONNECTION_LOST));
                         })
                         .subscribe(model -> {
@@ -132,19 +128,8 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
     }
 
     private void startCloud() {
-        if (disposable == null) {
-            logger.info("Start Cloud Clipboard Agent");
-            disposable = cloud();
-            return;
-        }
-
-        if (disposable.isDisposed()) {
-            disposable = cloud();
-            return;
-        }
-
-        if (connectionAlive.get()) {
-            return;
+        if(disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
         }
 
         disposable = cloud();
@@ -156,7 +141,6 @@ public class ClipboardAgent implements ApplicationListener<AgentEvent> {
         }
 
         disposable.dispose();
-        connectionAlive.set(false);
     }
 
     private void startLocal() {
