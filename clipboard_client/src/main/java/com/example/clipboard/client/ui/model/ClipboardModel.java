@@ -4,8 +4,11 @@ import com.example.clipboard.client.repository.entity.Content;
 import com.example.clipboard.client.service.AppContext;
 import com.example.clipboard.client.service.ClipboardService;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -56,6 +59,22 @@ public class ClipboardModel implements Consumer<Content> {
 
     public void clear() {
         Platform.runLater(contents::clear);
+    }
+
+    public FilteredList<Content> search(String key) {
+        return contents.filtered(content -> content.content.toLowerCase().contains(key.toLowerCase()));
+    }
+
+    public ObservableList<Content> search(ObservableValue<String> key) {
+        ObservableList<Content> contents = FXCollections.observableArrayList();
+        key.addListener((value, before, after) -> {
+            FilteredList<Content> list = search(value.getValue());
+            Platform.runLater(()->{
+                contents.removeAll();
+                contents.addAll(list);
+            });
+        });
+        return contents;
     }
 
     @Override

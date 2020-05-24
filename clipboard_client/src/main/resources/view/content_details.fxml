@@ -12,7 +12,7 @@
 <?import javafx.scene.text.Font?>
 
 <?import javafx.scene.control.ScrollPane?>
-<HBox prefWidth="450" prefHeight="300" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<HBox prefWidth="400" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <stylesheets>
       <URL value="@/style/main.css" />
    </stylesheets>
@@ -22,11 +22,11 @@
             <padding>
                <Insets top="10" left="10" right="10"/>
             </padding>
-            <Label fx:id="content" wrapText="true" VBox.vgrow="ALWAYS">
+            <TextArea editable="false" focusTraversable="false" style="-fx-background-color: #fafafa" fx:id="content" wrapText="true" VBox.vgrow="ALWAYS">
                <VBox.margin>
                   <Insets bottom="10.0" />
                </VBox.margin>
-            </Label>
+            </TextArea>
          </VBox>
       </center>
       <padding>
@@ -37,13 +37,12 @@
       </HBox.margin>
       <bottom>
          <HBox BorderPane.alignment="CENTER">
-            <JFXButton focusTraversable="false" layoutX="10.0" layoutY="10.0" text="Delete" fx:id="delete">
+            <JFXButton focusTraversable="false" text="Close" fx:id="close">
             </JFXButton>
             <Label wrapText="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
             <JFXButton focusTraversable="false" layoutX="356.0" layoutY="10.0" text="Copy" fx:id="copy">
             </JFXButton>
-            <JFXButton focusTraversable="false" text="Close" fx:id="close">
-            </JFXButton>
+
          </HBox>
       </bottom>
    </JFXToolbar>

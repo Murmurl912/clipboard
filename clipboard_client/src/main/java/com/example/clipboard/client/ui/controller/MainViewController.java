@@ -15,13 +15,16 @@ import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -76,7 +79,6 @@ public class MainViewController {
     private Resource avatarPopOverView;
 
     private PopOver avatarPopOver;
-    private PopOver contentDetailsPopOver;
 
     public MainViewController(ApplicationContext context) {
         this.context = context;
@@ -206,6 +208,7 @@ public class MainViewController {
                                             .setIcon(FontAwesomeIcon.SIGN_OUT);
                                     userAvatar.setText(appContext.username);
                                     sign.setText("Sign Out");
+                                    refresh();
                                 });
                             }).start();
                         } else {
@@ -237,6 +240,31 @@ public class MainViewController {
             } else {
                 avatarPopOver.show(avatar);
             }
+        });
+        search.setOnMouseClicked(e -> {
+            FontAwesomeIconView view = (FontAwesomeIconView)search.getGraphic();
+            if(view.getGlyphName().equalsIgnoreCase(FontAwesomeIcon.SEARCH.name())) {
+                view.setIcon(FontAwesomeIcon.TIMES);
+                searchEntry.requestFocus();
+                startSearch();
+            } else {
+                view.setIcon(FontAwesomeIcon.SEARCH);
+                stopSearch();
+            }
+        });
+        searchEntry.setOnKeyPressed(e -> {
+            if(StringUtils.isEmpty(searchEntry.getText())) {
+                return;
+            }
+
+            if(e.getCode() == KeyCode.ENTER) {
+                FontAwesomeIconView view = (FontAwesomeIconView)search.getGraphic();
+                view.setIcon(FontAwesomeIcon.TIMES);
+                startSearch();
+            }
+        });
+        searchEntry.setOnMouseClicked(e -> {
+
         });
     }
 
@@ -291,14 +319,6 @@ public class MainViewController {
         model.refresh();
     }
 
-    private void search(String text) {
-
-    }
-
-    private void cancel() {
-
-    }
-
     private void cloud(int index, Content content) {
         content = container.getItems().get(index);
         if (content.status == Content.ContentStatus.CONTENT_STATUS_CLOUD.STATUS) {
@@ -330,19 +350,48 @@ public class MainViewController {
         }
     }
 
+    private void startSearch() {
+        ClipboardModel model = context.getBean(ClipboardModel.class);
+        container.setItems(null);
+        container.setItems(model.search(searchEntry.getText()));
+    }
+
+    private void stopSearch() {
+        ClipboardModel model = context.getBean(ClipboardModel.class);
+        container.setItems(null);
+        container.setItems(model.clipboard());
+        refresh();
+    }
+
+
     private void details(Node root, int index, Content content) {
         content = container.getItems().get(index);
-        if (contentDetailsPopOver == null) {
-            contentDetailsPopOver = new PopOver(load(contentDetailView));
+        Content finalContent1 = content;
+        new Thread(()->{
+            Node node = load(contentDetailView);
+            PopOver contentDetailsPopOver = new PopOver(node);
             contentDetailsPopOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
             contentDetailsPopOver.setDetachable(false);
+            ((TextArea)node.lookup("#content"))
+                    .setText(finalContent1.content);
+            node.lookup("#copy")
+                    .setOnMouseClicked(e -> {
+                        Clipboard clipboard = Clipboard.getSystemClipboard();
+                        ClipboardContent clipboardContent = new ClipboardContent();
+                        clipboardContent.putString(finalContent1.content);
+                        clipboard.setContent(clipboardContent);
+                        contentDetailsPopOver.hide();
+                    });
+            node.lookup("#close")
+                    .setOnMouseClicked(e -> {
+                        contentDetailsPopOver.hide();
+                    });
+            Platform.runLater(()->{
+                contentDetailsPopOver.show(root);
+            });
 
-            contentDetailsPopOver.show(root);
-        } else if (contentDetailsPopOver.isShowing()) {
-            contentDetailsPopOver.hide();
-        } else {
-            contentDetailsPopOver.show(root);
-        }
+        }).start();
+
     }
 
 }
