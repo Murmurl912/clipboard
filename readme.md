@@ -6,7 +6,8 @@
     
     
 + ##演示  
-![image](/ezgifcom-gif-maker.gif)
+
+![image](ezgifcom-gif-maker.gif)
 
 + ##配置
     1. 数据库安装  
