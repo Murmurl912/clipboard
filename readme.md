@@ -5,7 +5,7 @@
     由于安卓10限制，项目被放弃。  
     
     
-+ ##演示
++ ##演示  
 ![image](https://github.com/Murmurl912/clipboard/blob/basic/ezgifcom-gif-maker.gif)
 
 + ##配置
