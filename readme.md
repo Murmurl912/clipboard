@@ -1,8 +1,12 @@
 # 同步剪切板
     这是一款剪切板同步应用，应用由四个部分组成。
     分别是存储服务端，登陆认证服务端，数据库服务器和客户端。
-   
+    
+    由于安卓10限制，项目被放弃。  
+    
+    
 + ##演示
+![image](https://github.com/Murmurl912/clipboard/blob/basic/ezgifcom-gif-maker.gif)
 
 + ##配置
     1. 数据库安装  
