@@ -4,10 +4,10 @@
     
     由于安卓10限制，项目被放弃。演示图片可能无法显示，下载文件即可。
     
- [需求分析文档](https://github.com/Murmurl912/clipboard/blob/basic/Clipboard%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.docx)
- [系统设计文档](https://github.com/Murmurl912/clipboard/blob/basic/Clipboard%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3.docx)
- [系统使用文档](https://github.com/Murmurl912/clipboard/blob/basic/Clipboard%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2%E8%AF%B4%E6%98%8E.docx)
- [系统演示视频](https://github.com/Murmurl912/clipboard/blob/basic/Clipboard%E7%B3%BB%E7%BB%9F%E6%BC%94%E7%A4%BA%E8%AF%B4%E6%98%8E.mp4)
+ [需求分析文档](https://github.com/Murmurl912/clipboard/blob/basic/Clipboard%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.docx)  
+ [系统设计文档](https://github.com/Murmurl912/clipboard/blob/basic/Clipboard%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3.docx)  
+ [系统使用文档](https://github.com/Murmurl912/clipboard/blob/basic/Clipboard%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2%E8%AF%B4%E6%98%8E.docx)  
+ [系统演示视频](https://github.com/Murmurl912/clipboard/blob/basic/Clipboard%E7%B3%BB%E7%BB%9F%E6%BC%94%E7%A4%BA%E8%AF%B4%E6%98%8E.mp4)  
  
 + ##配置
     1. 数据库安装  
