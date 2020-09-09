@@ -6,7 +6,7 @@
     
     
 + ##演示  
-![image](https://github.com/Murmurl912/clipboard/blob/basic/ezgifcom-gif-maker.gif)
+![image](/ezgifcom-gif-maker.gif)
 
 + ##配置
     1. 数据库安装  
